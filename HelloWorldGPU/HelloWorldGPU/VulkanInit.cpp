@@ -1,4 +1,4 @@
-#include "VulkanHighLevel.h"
+#include "VulkanInit.h"
 
 #include <set>
 #include <algorithm>
@@ -23,14 +23,14 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 }
 
 
-void VulkanHighLevel::run() {
+void VulkanInit::run() {
     initWindow();
     initVulkan();
     mainLoop();
     cleanup();
 }
 
-void VulkanHighLevel::initWindow() {
+void VulkanInit::initWindow() {
     glfwInit();
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -40,12 +40,12 @@ void VulkanHighLevel::initWindow() {
     glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 }
 
-void VulkanHighLevel::framebufferResizeCallback(GLFWwindow* window, int width, int height) {
-    auto app = reinterpret_cast<VulkanHighLevel*>(glfwGetWindowUserPointer(window));
+void VulkanInit::framebufferResizeCallback(GLFWwindow* window, int width, int height) {
+    auto app = reinterpret_cast<VulkanInit*>(glfwGetWindowUserPointer(window));
     app->framebufferResized = true;
 }
 
-void VulkanHighLevel::initVulkan() {
+void VulkanInit::initVulkan() {
     createInstance();
     setupDebugMessenger();
     createSurface();
@@ -61,7 +61,7 @@ void VulkanHighLevel::initVulkan() {
     createSyncObjects();
 }
 
-void VulkanHighLevel::mainLoop() {
+void VulkanInit::mainLoop() {
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
         drawFrame();
@@ -70,7 +70,7 @@ void VulkanHighLevel::mainLoop() {
     vkDeviceWaitIdle(device);
 }
 
-void VulkanHighLevel::cleanupSwapChain() {
+void VulkanInit::cleanupSwapChain() {
     for (auto framebuffer : swapChainFramebuffers) {
         vkDestroyFramebuffer(device, framebuffer, nullptr);
     }
@@ -82,7 +82,7 @@ void VulkanHighLevel::cleanupSwapChain() {
     vkDestroySwapchainKHR(device, swapChain, nullptr);
 }
 
-void VulkanHighLevel::cleanup() {
+void VulkanInit::cleanup() {
     cleanupSwapChain();
 
     vkDestroyPipeline(device, graphicsPipeline, nullptr);
@@ -112,7 +112,7 @@ void VulkanHighLevel::cleanup() {
     glfwTerminate();
 }
 
-void VulkanHighLevel::recreateSwapChain() {
+void VulkanInit::recreateSwapChain() {
     int width = 0, height = 0;
     glfwGetFramebufferSize(window, &width, &height);
     while (width == 0 || height == 0) {
@@ -129,7 +129,7 @@ void VulkanHighLevel::recreateSwapChain() {
     createFramebuffers();
 }
 
-void VulkanHighLevel::createInstance() {
+void VulkanInit::createInstance() {
     if (enableValidationLayers && !checkValidationLayerSupport()) {
         throw std::runtime_error("validation layers requested, but not available!");
     }
@@ -169,7 +169,7 @@ void VulkanHighLevel::createInstance() {
     }
 }
 
-void VulkanHighLevel::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
+void VulkanInit::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
     createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
@@ -177,7 +177,7 @@ void VulkanHighLevel::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCrea
     createInfo.pfnUserCallback = debugCallback;
 }
 
-void VulkanHighLevel::setupDebugMessenger() {
+void VulkanInit::setupDebugMessenger() {
     if (!enableValidationLayers) return;
 
     VkDebugUtilsMessengerCreateInfoEXT createInfo;
@@ -188,13 +188,13 @@ void VulkanHighLevel::setupDebugMessenger() {
     }
 }
 
-void VulkanHighLevel::createSurface() {
+void VulkanInit::createSurface() {
     if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
         throw std::runtime_error("failed to create window surface!");
     }
 }
 
-void VulkanHighLevel::pickPhysicalDevice() {
+void VulkanInit::pickPhysicalDevice() {
     uint32_t deviceCount = 0;
     vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 
@@ -217,7 +217,7 @@ void VulkanHighLevel::pickPhysicalDevice() {
     }
 }
 
-void VulkanHighLevel::createLogicalDevice() {
+void VulkanInit::createLogicalDevice() {
     QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
@@ -262,7 +262,7 @@ void VulkanHighLevel::createLogicalDevice() {
     vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
 }
 
-void VulkanHighLevel::createSwapChain() {
+void VulkanInit::createSwapChain() {
     SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
 
     VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
@@ -314,7 +314,7 @@ void VulkanHighLevel::createSwapChain() {
     swapChainExtent = extent;
 }
 
-void VulkanHighLevel::createImageViews() {
+void VulkanInit::createImageViews() {
     swapChainImageViews.resize(swapChainImages.size());
 
     for (size_t i = 0; i < swapChainImages.size(); i++) {
@@ -339,7 +339,7 @@ void VulkanHighLevel::createImageViews() {
     }
 }
 
-void VulkanHighLevel::createRenderPass() {
+void VulkanInit::createRenderPass() {
     VkAttachmentDescription colorAttachment{};
     colorAttachment.format = swapChainImageFormat;
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -381,7 +381,7 @@ void VulkanHighLevel::createRenderPass() {
     }
 }
 
-void VulkanHighLevel::createGraphicsPipeline() {
+void VulkanInit::createGraphicsPipeline() {
     auto vertShaderCode = readFile("shaders/vert.spv");
     auto fragShaderCode = readFile("shaders/frag.spv");
 
@@ -489,7 +489,7 @@ void VulkanHighLevel::createGraphicsPipeline() {
     vkDestroyShaderModule(device, vertShaderModule, nullptr);
 }
 
-void VulkanHighLevel::createFramebuffers() {
+void VulkanInit::createFramebuffers() {
     swapChainFramebuffers.resize(swapChainImageViews.size());
 
     for (size_t i = 0; i < swapChainImageViews.size(); i++) {
@@ -512,7 +512,7 @@ void VulkanHighLevel::createFramebuffers() {
     }
 }
 
-void VulkanHighLevel::createCommandPool() {
+void VulkanInit::createCommandPool() {
     QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
 
     VkCommandPoolCreateInfo poolInfo{};
@@ -525,7 +525,7 @@ void VulkanHighLevel::createCommandPool() {
     }
 }
 
-void VulkanHighLevel::createCommandBuffers() {
+void VulkanInit::createCommandBuffers() {
     commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 
     VkCommandBufferAllocateInfo allocInfo{};
@@ -539,7 +539,7 @@ void VulkanHighLevel::createCommandBuffers() {
     }
 }
 
-void VulkanHighLevel::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
+void VulkanInit::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
@@ -576,7 +576,7 @@ void VulkanHighLevel::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_
     scissor.extent = swapChainExtent;
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-    vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+    vkCmdDraw(commandBuffer, 6, 1, 0, 0);
 
     vkCmdEndRenderPass(commandBuffer);
 
@@ -585,7 +585,7 @@ void VulkanHighLevel::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_
     }
 }
 
-void VulkanHighLevel::createSyncObjects() {
+void VulkanInit::createSyncObjects() {
     imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
@@ -606,7 +606,7 @@ void VulkanHighLevel::createSyncObjects() {
     }
 }
 
-void VulkanHighLevel::drawFrame() {
+void VulkanInit::drawFrame() {
     vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
     uint32_t imageIndex;
@@ -670,7 +670,7 @@ void VulkanHighLevel::drawFrame() {
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-VkShaderModule VulkanHighLevel::createShaderModule(const std::vector<char>& code) {
+VkShaderModule VulkanInit::createShaderModule(const std::vector<char>& code) {
     VkShaderModuleCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     createInfo.codeSize = code.size();
@@ -684,7 +684,7 @@ VkShaderModule VulkanHighLevel::createShaderModule(const std::vector<char>& code
     return shaderModule;
 }
 
-VkSurfaceFormatKHR VulkanHighLevel::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
+VkSurfaceFormatKHR VulkanInit::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
     for (const auto& availableFormat : availableFormats) {
         if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
             return availableFormat;
@@ -694,7 +694,7 @@ VkSurfaceFormatKHR VulkanHighLevel::chooseSwapSurfaceFormat(const std::vector<Vk
     return availableFormats[0];
 }
 
-VkPresentModeKHR VulkanHighLevel::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) {
+VkPresentModeKHR VulkanInit::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) {
     for (const auto& availablePresentMode : availablePresentModes) {
         if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
             return availablePresentMode;
@@ -704,7 +704,7 @@ VkPresentModeKHR VulkanHighLevel::chooseSwapPresentMode(const std::vector<VkPres
     return VK_PRESENT_MODE_FIFO_KHR;
 }
 
-VkExtent2D VulkanHighLevel::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities) {
+VkExtent2D VulkanInit::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities) {
     if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
         return capabilities.currentExtent;
     }
@@ -724,7 +724,7 @@ VkExtent2D VulkanHighLevel::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& cap
     }
 }
 
-VulkanHighLevel::SwapChainSupportDetails VulkanHighLevel::querySwapChainSupport(VkPhysicalDevice device) {
+VulkanInit::SwapChainSupportDetails VulkanInit::querySwapChainSupport(VkPhysicalDevice device) {
     SwapChainSupportDetails details;
 
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
@@ -748,7 +748,7 @@ VulkanHighLevel::SwapChainSupportDetails VulkanHighLevel::querySwapChainSupport(
     return details;
 }
 
-bool VulkanHighLevel::isDeviceSuitable(VkPhysicalDevice device) {
+bool VulkanInit::isDeviceSuitable(VkPhysicalDevice device) {
     QueueFamilyIndices indices = findQueueFamilies(device);
 
     bool extensionsSupported = checkDeviceExtensionSupport(device);
@@ -762,7 +762,7 @@ bool VulkanHighLevel::isDeviceSuitable(VkPhysicalDevice device) {
     return indices.isComplete() && extensionsSupported && swapChainAdequate;
 }
 
-bool VulkanHighLevel::checkDeviceExtensionSupport(VkPhysicalDevice device) {
+bool VulkanInit::checkDeviceExtensionSupport(VkPhysicalDevice device) {
     uint32_t extensionCount;
     vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
 
@@ -778,7 +778,7 @@ bool VulkanHighLevel::checkDeviceExtensionSupport(VkPhysicalDevice device) {
     return requiredExtensions.empty();
 }
 
-VulkanHighLevel::QueueFamilyIndices VulkanHighLevel::findQueueFamilies(VkPhysicalDevice device) {
+VulkanInit::QueueFamilyIndices VulkanInit::findQueueFamilies(VkPhysicalDevice device) {
     QueueFamilyIndices indices;
 
     uint32_t queueFamilyCount = 0;
@@ -810,7 +810,7 @@ VulkanHighLevel::QueueFamilyIndices VulkanHighLevel::findQueueFamilies(VkPhysica
     return indices;
 }
 
-std::vector<const char*> VulkanHighLevel::getRequiredExtensions() {
+std::vector<const char*> VulkanInit::getRequiredExtensions() {
     uint32_t glfwExtensionCount = 0;
     const char** glfwExtensions;
     glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
@@ -824,7 +824,7 @@ std::vector<const char*> VulkanHighLevel::getRequiredExtensions() {
     return extensions;
 }
 
-bool VulkanHighLevel::checkValidationLayerSupport() {
+bool VulkanInit::checkValidationLayerSupport() {
     uint32_t layerCount;
     vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
@@ -849,7 +849,7 @@ bool VulkanHighLevel::checkValidationLayerSupport() {
     return true;
 }
 
-std::vector<char> VulkanHighLevel::readFile(const std::string& filename) {
+std::vector<char> VulkanInit::readFile(const std::string& filename) {
     std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
     if (!file.is_open()) {
@@ -867,7 +867,7 @@ std::vector<char> VulkanHighLevel::readFile(const std::string& filename) {
     return buffer;
 }
 
-VKAPI_ATTR VkBool32 VKAPI_CALL VulkanHighLevel::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
+VKAPI_ATTR VkBool32 VKAPI_CALL VulkanInit::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
     std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
 
     return VK_FALSE;

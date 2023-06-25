@@ -25,7 +25,7 @@ const std::vector<const char*> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
-class VulkanHighLevel
+class VulkanInit
 {
 public:
     struct QueueFamilyIndices {

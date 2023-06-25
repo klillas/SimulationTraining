@@ -15,10 +15,10 @@
 #include <set>
 */
 
-#include "VulkanHighLevel.h"
+#include "VulkanInit.h"
 
 int main() {
-    VulkanHighLevel app;
+    VulkanInit app;
 
     try {
         app.run();
