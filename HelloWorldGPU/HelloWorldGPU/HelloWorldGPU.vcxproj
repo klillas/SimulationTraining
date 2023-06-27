@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup>
     <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
-  </PropertyGroup> 
+  </PropertyGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -133,14 +133,14 @@ D:\development\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(Ou
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\..\Include\GLFW\lib-vc2022;$(SolutionDir)\..\Include\VULKAN\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\Include\GLFW\include\GLFW;$(SolutionDir)\..\Include\GLFW\lib-vc2022;$(SolutionDir)\..\Include\VULKAN\Lib;$(SolutionDir)\..\Include\glm\glm;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>if not exist "$(OutDir)\shaders\" mkdir "$(OutDir)\shaders\"
 
-D:\development\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.vert -o $(OutDir)\shaders\vert.spv
-D:\development\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(OutDir)\shaders\frag.spv</Command>
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.vert -o $(OutDir)\shaders\vert.spv
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(OutDir)\shaders\frag.spv</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
