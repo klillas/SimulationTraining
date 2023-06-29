@@ -9,8 +9,8 @@
 #include <glm/glm.hpp>
 #include <array>
 
-const uint32_t WIDTH = 800;
-const uint32_t HEIGHT = 600;
+const uint32_t WIDTH = 1024;
+const uint32_t HEIGHT = 768;
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
 #ifdef NDEBUG
@@ -122,6 +122,8 @@ public:
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
     void createSyncObjects();
+
+    void updateVertexBuffer();
 
     void drawFrame();
 

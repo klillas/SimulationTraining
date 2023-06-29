@@ -127,7 +127,7 @@ D:\development\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(Ou
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\Include\Vulkan\Include;$(SolutionDir)\..\Include\GLM;$(SolutionDir)\..\Include\GLFW\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\Include\Vulkan\Include;$(SolutionDir)\..\Include\GLM;$(SolutionDir)\..\Include\GLFW\include;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -170,17 +170,24 @@ D:\development\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(Ou
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Physics\Shapes\IRigidObject.cpp" />
+    <ClCompile Include="Physics\Shapes\Square.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="VulkanInit.cpp" />
-    <ClCompile Include="VulkanRunner.cpp" />
+    <ClCompile Include="Physics\PhysicsEngine.cpp" />
+    <ClCompile Include="Vulkan\VulkanInit.cpp" />
+    <ClCompile Include="Vulkan\VulkanRunner.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\shader.frag" />
     <None Include="shaders\shader.vert" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="VulkanInit.h" />
-    <ClInclude Include="VulkanRunner.h" />
+    <ClInclude Include="Physics\Shapes\IRigidObject.h" />
+    <ClInclude Include="Physics\Shapes\IShape.h" />
+    <ClInclude Include="Physics\Shapes\Square.h" />
+    <ClInclude Include="Physics\PhysicsEngine.h" />
+    <ClInclude Include="Vulkan\VulkanInit.h" />
+    <ClInclude Include="Vulkan\VulkanRunner.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

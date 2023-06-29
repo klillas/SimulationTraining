@@ -16,15 +16,42 @@
     <Filter Include="shaders">
       <UniqueIdentifier>{4be83a40-06a5-44f8-9ec4-bfc7fc7a18e1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Physics">
+      <UniqueIdentifier>{c429a55c-413e-4b0a-8941-25b697b1c1b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Physics">
+      <UniqueIdentifier>{5eddb724-323c-4efe-93f0-3794eeb19fa7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Physics\Shapes">
+      <UniqueIdentifier>{acfd6159-f9c5-449e-b00d-394dcd8890b6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Physics\Shapes">
+      <UniqueIdentifier>{4524f5df-d3f8-4bdd-a1f9-2a048efbb24c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Physics\RigidObjects">
+      <UniqueIdentifier>{c5de9e43-e380-4f33-8ebe-cdb26e0b6572}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Physics\RigidObjects">
+      <UniqueIdentifier>{90b9a76c-028d-4ba2-8555-c34fe2c45c87}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="VulkanInit.cpp">
+    <ClCompile Include="Vulkan\VulkanInit.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="VulkanRunner.cpp">
+    <ClCompile Include="Vulkan\VulkanRunner.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Physics\PhysicsEngine.cpp">
+      <Filter>Source Files\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Physics\Shapes\Square.cpp">
+      <Filter>Source Files\Physics\Shapes</Filter>
+    </ClCompile>
+    <ClCompile Include="Physics\Shapes\IRigidObject.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -37,11 +64,23 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="VulkanInit.h">
+    <ClInclude Include="Vulkan\VulkanRunner.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="VulkanRunner.h">
+    <ClInclude Include="Vulkan\VulkanInit.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\PhysicsEngine.h">
+      <Filter>Header Files\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\Shapes\Square.h">
+      <Filter>Header Files\Physics\Shapes</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\Shapes\IShape.h">
+      <Filter>Header Files\Physics\Shapes</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\Shapes\IRigidObject.h">
+      <Filter>Header Files\Physics\RigidObjects</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

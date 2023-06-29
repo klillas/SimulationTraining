@@ -3,15 +3,14 @@
 #include <set>
 #include <algorithm>
 #include <fstream>
+#include "Square.h"
+#include <random>
 
-const std::vector<VulkanInit::Vertex> vertices = {
-    {{-1.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-    {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-    {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-    {{0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-    {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-    {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
-};
+using namespace Physics::Shapes;
+
+constexpr size_t MaxVertices = 100000000;
+
+std::vector<VulkanInit::Vertex> vertices = {};
 
 
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
@@ -74,7 +73,7 @@ void VulkanInit::initVulkan() {
 void VulkanInit::createVertexBuffer() {
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.size = sizeof(vertices[0]) * vertices.size();
+    bufferInfo.size = sizeof(VulkanInit::Vertex) * MaxVertices;
     bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
@@ -95,11 +94,20 @@ void VulkanInit::createVertexBuffer() {
     }
 
     vkBindBufferMemory(device, vertexBuffer, vertexBufferMemory, 0);
+}
 
-    // Copy data to GPU memory
+void VulkanInit::updateVertexBuffer()
+{
+    VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+
+    // Map the vertex buffer memory
     void* data;
-    vkMapMemory(device, vertexBufferMemory, 0, bufferInfo.size, 0, &data);
-    memcpy(data, vertices.data(), (size_t)bufferInfo.size);
+    vkMapMemory(device, vertexBufferMemory, 0, bufferSize, 0, &data);
+
+    // Copy the updated vertex data to the mapped memory
+    memcpy(data, vertices.data(), static_cast<size_t>(bufferSize));
+
+    // Unmap the vertex buffer memory
     vkUnmapMemory(device, vertexBufferMemory);
 }
 
@@ -117,8 +125,36 @@ uint32_t VulkanInit::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags p
 }
 
 void VulkanInit::mainLoop() {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> distributionPosition(-1.0f, 1.0f);
+    std::uniform_real_distribution<float> distributionColor(0.0f, 1.0f);
+    std::uniform_real_distribution<float> distributionSize(0.01f, 0.01f);
+
     while (!glfwWindowShouldClose(window)) {
+        // Test code
+        for (unsigned i = 0; i < 1000; i++)
+        {
+            if (vertices.size() + 3 > MaxVertices)
+            {
+                vertices.clear();
+            }
+
+            Square square;
+            square.m_position.x = distributionPosition(gen);
+            square.m_position.y = distributionPosition(gen);
+            square.m_size = distributionSize(gen);
+            square.m_color.r = distributionColor(gen);
+            square.m_color.g = distributionColor(gen);
+            square.m_color.b = distributionColor(gen);
+
+            //vertices
+            std::vector<VulkanInit::Vertex> newVerts = square.GetVertices();
+            vertices.insert(vertices.end(), newVerts.begin(), newVerts.end());
+        }
+
         glfwPollEvents();
+        updateVertexBuffer();
         drawFrame();
     }
 
