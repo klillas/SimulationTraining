@@ -3,10 +3,11 @@
 #include <set>
 #include <algorithm>
 #include <fstream>
-#include "Square.h"
+//#include "./Physics/Shapes/Square.h"
+#include "./Physics/RigidObjects/SquareRigidObject.h"
 #include <random>
 
-using namespace Physics::Shapes;
+using namespace Physics::RigidObjects;
 
 constexpr size_t MaxVertices = 100000000;
 
@@ -130,26 +131,38 @@ void VulkanInit::mainLoop() {
     std::uniform_real_distribution<float> distributionPosition(-1.0f, 1.0f);
     std::uniform_real_distribution<float> distributionColor(0.0f, 1.0f);
     std::uniform_real_distribution<float> distributionSize(0.01f, 0.01f);
+    std::uniform_real_distribution<float> distributionVelocity(-1.0f, 1.0f);
+    std::uniform_real_distribution<float> distributionMass(0.1f, 1.0f);
+
+    // Test code
+    std::vector<SquareRigidObject*> rigidObjects = {};
 
     while (!glfwWindowShouldClose(window)) {
-        // Test code
-        for (unsigned i = 0; i < 1000; i++)
+        for (unsigned i = 0; i < 20; i++)
         {
-            if (vertices.size() + 3 > MaxVertices)
-            {
-                vertices.clear();
-            }
+            SquareRigidObject* square = new SquareRigidObject();
+            square->m_position.x = distributionPosition(gen);
+            square->m_position.y = distributionPosition(gen);
+            square->m_size = distributionSize(gen);
+            square->m_color.r = distributionColor(gen);
+            square->m_color.g = distributionColor(gen);
+            square->m_color.b = distributionColor(gen);
+            square->m_velocity.x = distributionVelocity(gen);
+            square->m_velocity.y = distributionVelocity(gen);
+            square->m_mass = distributionMass(gen);
 
-            Square square;
-            square.m_position.x = distributionPosition(gen);
-            square.m_position.y = distributionPosition(gen);
-            square.m_size = distributionSize(gen);
-            square.m_color.r = distributionColor(gen);
-            square.m_color.g = distributionColor(gen);
-            square.m_color.b = distributionColor(gen);
+            rigidObjects.push_back(square);
+        }
+
+
+        vertices.clear();
+        for (unsigned i = 0; i < rigidObjects.size(); i++)
+        {
+            SquareRigidObject* rigidObject = rigidObjects.at(i);
+            rigidObject->PhysicsTick(0.01f);
 
             //vertices
-            std::vector<VulkanInit::Vertex> newVerts = square.GetVertices();
+            std::vector<VulkanInit::Vertex> newVerts = rigidObject->GetVertices();
             vertices.insert(vertices.end(), newVerts.begin(), newVerts.end());
         }
 

@@ -170,10 +170,10 @@ D:\development\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(Ou
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Physics\Shapes\IRigidObject.cpp" />
     <ClCompile Include="Physics\Shapes\Square.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Physics\PhysicsEngine.cpp" />
+    <ClCompile Include="Physics\RigidObjects\SquareRigidObject.cpp" />
     <ClCompile Include="Vulkan\VulkanInit.cpp" />
     <ClCompile Include="Vulkan\VulkanRunner.cpp" />
   </ItemGroup>
@@ -182,10 +182,11 @@ D:\development\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(Ou
     <None Include="shaders\shader.vert" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Physics\Shapes\IRigidObject.h" />
+    <ClInclude Include="Physics\RigidObjects\IRigidObject.h" />
     <ClInclude Include="Physics\Shapes\IShape.h" />
     <ClInclude Include="Physics\Shapes\Square.h" />
     <ClInclude Include="Physics\PhysicsEngine.h" />
+    <ClInclude Include="Physics\RigidObjects\SquareRigidObject.h" />
     <ClInclude Include="Vulkan\VulkanInit.h" />
     <ClInclude Include="Vulkan\VulkanRunner.h" />
   </ItemGroup>

@@ -51,7 +51,7 @@
     <ClCompile Include="Physics\Shapes\Square.cpp">
       <Filter>Source Files\Physics\Shapes</Filter>
     </ClCompile>
-    <ClCompile Include="Physics\Shapes\IRigidObject.cpp">
+    <ClCompile Include="Physics\RigidObjects\SquareRigidObject.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -79,8 +79,11 @@
     <ClInclude Include="Physics\Shapes\IShape.h">
       <Filter>Header Files\Physics\Shapes</Filter>
     </ClInclude>
-    <ClInclude Include="Physics\Shapes\IRigidObject.h">
+    <ClInclude Include="Physics\RigidObjects\IRigidObject.h">
       <Filter>Header Files\Physics\RigidObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\RigidObjects\SquareRigidObject.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
