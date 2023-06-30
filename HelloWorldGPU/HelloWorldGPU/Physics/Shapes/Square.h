@@ -27,6 +27,8 @@ namespace Physics::Shapes
 		glm::vec3 GetColor();
 		void SetColor(glm::vec3 newColor);
 		std::vector<VulkanInit::Vertex> GetVertices();
+		float GetSize();
+		void SetSize(float size);
 	};
 };
 

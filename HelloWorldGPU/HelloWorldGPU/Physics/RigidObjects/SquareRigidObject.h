@@ -2,6 +2,7 @@
 
 #include "IRigidObject.h"
 #include "./Physics/Shapes/Square.h"
+#include "./Physics/Shapes/IShape.h"
 
 namespace Physics::RigidObjects
 {

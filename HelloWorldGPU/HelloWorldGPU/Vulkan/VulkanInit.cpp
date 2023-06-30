@@ -3,11 +3,14 @@
 #include <set>
 #include <algorithm>
 #include <fstream>
-//#include "./Physics/Shapes/Square.h"
+#include "./Physics/Engine/IPhysicsEngine.h"
+#include "./Physics/Engine/PhysicsEngine.h"
 #include "./Physics/RigidObjects/SquareRigidObject.h"
+#include "./Physics/RigidObjects/IRigidObject.h"
 #include <random>
 
 using namespace Physics::RigidObjects;
+using namespace Physics::Shapes;
 
 constexpr size_t MaxVertices = 100000000;
 
@@ -135,36 +138,27 @@ void VulkanInit::mainLoop() {
     std::uniform_real_distribution<float> distributionMass(0.1f, 1.0f);
 
     // Test code
-    std::vector<SquareRigidObject*> rigidObjects = {};
+    Physics::Engine::IPhysicsEngine* engine = new Physics::Engine::PhysicsEngine();
 
     while (!glfwWindowShouldClose(window)) {
+        engine->PhysicsTick(0.01f);
         for (unsigned i = 0; i < 20; i++)
         {
-            SquareRigidObject* square = new SquareRigidObject();
-            square->m_position.x = distributionPosition(gen);
-            square->m_position.y = distributionPosition(gen);
-            square->m_size = distributionSize(gen);
-            square->m_color.r = distributionColor(gen);
-            square->m_color.g = distributionColor(gen);
-            square->m_color.b = distributionColor(gen);
-            square->m_velocity.x = distributionVelocity(gen);
-            square->m_velocity.y = distributionVelocity(gen);
-            square->m_mass = distributionMass(gen);
+            IRigidObject* rigidBody = new SquareRigidObject();
+            IShape* shape = dynamic_cast<IShape*>(rigidBody);
+            shape->SetPosition(glm::vec2(distributionPosition(gen), distributionPosition(gen)));
+            shape->SetSize(distributionSize(gen));
+            shape->SetColor(glm::vec3(distributionColor(gen), distributionColor(gen), distributionColor(gen)));
+            rigidBody->SetVelocity(glm::vec2(distributionVelocity(gen), distributionVelocity(gen)));
+            rigidBody->SetMass(distributionMass(gen));
 
-            rigidObjects.push_back(square);
+            engine->AddRigidObject(rigidBody);
         }
 
 
         vertices.clear();
-        for (unsigned i = 0; i < rigidObjects.size(); i++)
-        {
-            SquareRigidObject* rigidObject = rigidObjects.at(i);
-            rigidObject->PhysicsTick(0.01f);
-
-            //vertices
-            std::vector<VulkanInit::Vertex> newVerts = rigidObject->GetVertices();
-            vertices.insert(vertices.end(), newVerts.begin(), newVerts.end());
-        }
+        std::vector<VulkanInit::Vertex> newVerts = engine->GetVertices();
+        vertices.insert(vertices.end(), newVerts.begin(), newVerts.end());
 
         glfwPollEvents();
         updateVertexBuffer();

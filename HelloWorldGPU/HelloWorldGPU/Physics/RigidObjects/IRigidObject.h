@@ -3,10 +3,11 @@
 #include <glm/glm.hpp>
 #include "./Physics/Shapes/IShape.h"
 
-namespace Physics
+namespace Physics::RigidObjects
 {
 	class IRigidObject
 	{
+	public:
 		virtual float GetMass() = 0;
 		virtual void SetMass(float newMass) = 0;
 

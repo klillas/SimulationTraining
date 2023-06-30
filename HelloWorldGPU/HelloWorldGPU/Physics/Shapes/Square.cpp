@@ -98,3 +98,13 @@ void Square::SetColor(glm::vec3 newColor)
     m_color.g = newColor.g;
     m_color.b = newColor.b;
 }
+
+float Square::GetSize()
+{
+    return m_size;
+}
+
+void Square::SetSize(float size)
+{
+    m_size = size;
+}

@@ -45,7 +45,7 @@
     <ClCompile Include="Vulkan\VulkanRunner.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Physics\PhysicsEngine.cpp">
+    <ClCompile Include="Physics\Engine\PhysicsEngine.cpp">
       <Filter>Source Files\Physics</Filter>
     </ClCompile>
     <ClCompile Include="Physics\Shapes\Square.cpp">
@@ -70,7 +70,7 @@
     <ClInclude Include="Vulkan\VulkanInit.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Physics\PhysicsEngine.h">
+    <ClInclude Include="Physics\Engine\PhysicsEngine.h">
       <Filter>Header Files\Physics</Filter>
     </ClInclude>
     <ClInclude Include="Physics\Shapes\Square.h">
@@ -83,6 +83,9 @@
       <Filter>Header Files\Physics\RigidObjects</Filter>
     </ClInclude>
     <ClInclude Include="Physics\RigidObjects\SquareRigidObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\Engine\IPhysicsEngine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
