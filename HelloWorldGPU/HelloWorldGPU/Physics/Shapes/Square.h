@@ -29,6 +29,8 @@ namespace Physics::Shapes
 		std::vector<VulkanInit::Vertex> GetVertices();
 		float GetSize();
 		void SetSize(float size);
+		bool Intersects(IShape* shape);
+		void AddPosition(glm::vec2 positionIncrement);
 	};
 };
 

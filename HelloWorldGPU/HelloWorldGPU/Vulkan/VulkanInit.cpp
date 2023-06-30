@@ -133,28 +133,47 @@ void VulkanInit::mainLoop() {
     std::mt19937 gen(rd());
     std::uniform_real_distribution<float> distributionPosition(-1.0f, 1.0f);
     std::uniform_real_distribution<float> distributionColor(0.0f, 1.0f);
-    std::uniform_real_distribution<float> distributionSize(0.01f, 0.01f);
+    std::uniform_real_distribution<float> distributionSize(0.05f, 0.05f);
     std::uniform_real_distribution<float> distributionVelocity(-1.0f, 1.0f);
     std::uniform_real_distribution<float> distributionMass(0.1f, 1.0f);
 
     // Test code
     Physics::Engine::IPhysicsEngine* engine = new Physics::Engine::PhysicsEngine();
+    /*
+    IRigidObject* rigidBody = new SquareRigidObject();
+    IShape* shape = dynamic_cast<IShape*>(rigidBody);
+    shape->SetPosition(glm::vec2(-0.5f, 0.0f));
+    shape->SetSize(0.1f);
+    shape->SetColor(glm::vec3(distributionColor(gen), distributionColor(gen), distributionColor(gen)));
+    rigidBody->SetVelocity(glm::vec2(0.5f, 0.0f));
+    rigidBody->SetMass(1.0f);
+    engine->AddRigidObject(rigidBody);
+
+    rigidBody = new SquareRigidObject();
+    shape = dynamic_cast<IShape*>(rigidBody);
+    shape->SetPosition(glm::vec2(0.0f, 0.0f));
+    shape->SetSize(0.1f);
+    shape->SetColor(glm::vec3(distributionColor(gen), distributionColor(gen), distributionColor(gen)));
+    rigidBody->SetVelocity(glm::vec2(0.0f, 0.0f));
+    rigidBody->SetMass(1.0f);
+    engine->AddRigidObject(rigidBody);
+    */
+
+    for (unsigned i = 0; i < 100; i++)
+    {
+        IRigidObject* rigidBody = new SquareRigidObject();
+        IShape* shape = dynamic_cast<IShape*>(rigidBody);
+        shape->SetPosition(glm::vec2(distributionPosition(gen), distributionPosition(gen)));
+        shape->SetSize(distributionSize(gen));
+        shape->SetColor(glm::vec3(distributionColor(gen), distributionColor(gen), distributionColor(gen)));
+        rigidBody->SetVelocity(glm::vec2(distributionVelocity(gen), distributionVelocity(gen)));
+        rigidBody->SetMass(distributionMass(gen));
+
+        engine->AddRigidObject(rigidBody);
+    }
 
     while (!glfwWindowShouldClose(window)) {
         engine->PhysicsTick(0.01f);
-        for (unsigned i = 0; i < 20; i++)
-        {
-            IRigidObject* rigidBody = new SquareRigidObject();
-            IShape* shape = dynamic_cast<IShape*>(rigidBody);
-            shape->SetPosition(glm::vec2(distributionPosition(gen), distributionPosition(gen)));
-            shape->SetSize(distributionSize(gen));
-            shape->SetColor(glm::vec3(distributionColor(gen), distributionColor(gen), distributionColor(gen)));
-            rigidBody->SetVelocity(glm::vec2(distributionVelocity(gen), distributionVelocity(gen)));
-            rigidBody->SetMass(distributionMass(gen));
-
-            engine->AddRigidObject(rigidBody);
-        }
-
 
         vertices.clear();
         std::vector<VulkanInit::Vertex> newVerts = engine->GetVertices();

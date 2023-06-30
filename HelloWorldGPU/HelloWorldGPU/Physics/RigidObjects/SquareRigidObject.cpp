@@ -39,6 +39,11 @@ void SquareRigidObject::SetVelocity(glm::vec2 newVelocity)
 	m_velocity.y = newVelocity.y;
 }
 
+void SquareRigidObject::AddVelocity(glm::vec2 addedVelocity)
+{
+	m_velocity += addedVelocity;
+}
+
 void SquareRigidObject::PhysicsTick(float timeDelta)
 {
 	m_position += (m_velocity * timeDelta);

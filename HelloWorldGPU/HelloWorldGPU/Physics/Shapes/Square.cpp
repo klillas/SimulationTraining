@@ -21,6 +21,29 @@ Square::Square() :
 {
 }
 
+bool Square::Intersects(IShape* shape)
+{
+    // TODO: Intersection approximated with circle no matter the actual shape of the IShape. Good enough or fix later?
+    glm::vec2 shapePos = shape->GetPosition();
+    float shapeRadius = (shape->GetSize() / 2);
+
+    // Calculate the distance between the centers of the circles
+    float distance = glm::distance(m_position, shapePos);
+
+    // Calculate the sum of the radii
+    float sumRadii = (m_size / 2) + shapeRadius;
+
+    // Check if the circles intersect
+    if (distance <= sumRadii) 
+    {
+        return true;  // Circles intersect
+    }
+    else 
+    {
+        return false; // Circles do not intersect
+    }
+}
+
 std::vector<VulkanInit::Vertex> Square::GetVertices()
 {
     glm::vec2 center(m_position.x, m_position.y);
@@ -75,6 +98,11 @@ void Square::SetPosition(glm::vec2 newPos)
 {
     m_position.x = newPos.x;
     m_position.y = newPos.y;
+}
+
+void Square::AddPosition(glm::vec2 positionIncrement)
+{
+    m_position += positionIncrement;
 }
 
 float Square::GetRotation()

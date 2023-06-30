@@ -17,6 +17,7 @@ namespace Physics::RigidObjects
 		glm::vec2 GetVelocity();
 		void SetVelocity(glm::vec2 newVelocity);
 		void PhysicsTick(float timeDelta);
+		void AddVelocity(glm::vec2 addedVelocity);
 
 		float m_mass;
 		glm::vec2 m_velocity;
