@@ -64,21 +64,6 @@ void PhysicsEngine::ResolveMoleculeCollisions(float timeDelta)
 				ro1->AddVelocity(velocityAdjustment);
 				ro2->AddVelocity(-velocityAdjustment);
 
-				/*
-
-				// Calculate the normal and tangential components of the relative velocity
-				float relativeVelocityNormal = glm::dot(relativeVelocity, normal);
-				float relativeVelocityTangential = glm::dot(relativeVelocity, tangential);
-
-				// Calculate the impulse (change in momentum) along the normal direction
-				float impulseMagnitude = (-(1 + epsilon) * relativeVelocityNormal) /
-					((1 / moleculeMass) + (1 / moleculeMass));
-
-				// Apply the impulse to update the velocities
-				ro1->AddVelocity((impulseMagnitude / moleculeMass) * normal);
-				ro2->AddVelocity(-(impulseMagnitude / moleculeMass) * normal);
-				*/
-
 				// Separate the circles to avoid overlapping
 				float overlap = (moleculeRadius + moleculeRadius) - distance;
 				glm::vec2 separation = (overlap * normal * 0.5f) + epsilon;
