@@ -8,7 +8,9 @@
 #include "./Physics/RigidObjects/GasMoleculeRigidObject.h"
 #include "./Physics/RigidObjects/IRigidObject.h"
 #include "./Physics/PhysicsConfiguration.h"
+#include "./Debug/DebugOutput.h"
 #include <random>
+#include <chrono>
 
 using namespace Physics::RigidObjects;
 using namespace Physics::Shapes;
@@ -137,6 +139,7 @@ void VulkanInit::mainLoop() {
     std::uniform_real_distribution<float> distributionVelocity(-5.0f, 5.0f);
 
     // Test code
+    Debug::DebugOutput* debug = Debug::DebugOutput::GetInstance();
     Physics::Engine::IPhysicsEngine* engine = new Physics::Engine::PhysicsEngine();
     /*
     IRigidObject* rigidBody = new GasMoleculeRigidObject();
@@ -165,7 +168,15 @@ void VulkanInit::mainLoop() {
         engine->AddRigidObject(rigidBody);
     }
 
+    unsigned frameCounter = 0;
+    auto startTime = std::chrono::high_resolution_clock::now();
+    auto endTime = std::chrono::high_resolution_clock::now();
     while (!glfwWindowShouldClose(window)) {
+        if (frameCounter == 0)
+        {
+            startTime = std::chrono::high_resolution_clock::now();
+        }
+
         engine->PhysicsTick(0.01f);
 
         vertices.clear();
@@ -175,6 +186,24 @@ void VulkanInit::mainLoop() {
         glfwPollEvents();
         updateVertexBuffer();
         drawFrame();
+
+        frameCounter++;
+        endTime = std::chrono::high_resolution_clock::now();
+        long duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
+        if (duration_ms >= 1000)
+        {
+            std::string str = "Frames per second: ";
+            // Convert float to string
+            std::stringstream ss;
+            ss << std::fixed << std::setprecision(1) << (frameCounter * 1000.0f / duration_ms);
+            std::string floatString = ss.str();
+
+            // Concatenate the string and float string
+            std::string result = str + floatString;
+            debug->Print(&result);
+
+            frameCounter = 0;
+        }
     }
 
     vkDeviceWaitIdle(device);

@@ -1,6 +1,7 @@
 #include "PhysicsEngine.h"
 #include "./Physics/Shapes/IShape.h"
 #include "./Physics/PhysicsConfiguration.h"
+#include "Debug/DebugOutput.h"
 
 using namespace Physics::Engine;
 using namespace Physics::Shapes;
