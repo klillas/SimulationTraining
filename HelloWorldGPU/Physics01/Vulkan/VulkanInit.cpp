@@ -5,7 +5,7 @@
 #include <fstream>
 #include "./Physics/Engine/IPhysicsEngine.h"
 #include "./Physics/Engine/PhysicsEngine.h"
-#include "./Physics/RigidObjects/SquareRigidObject.h"
+#include "./Physics/RigidObjects/GasMoleculeRigidObject.h"
 #include "./Physics/RigidObjects/IRigidObject.h"
 #include <random>
 
@@ -133,9 +133,7 @@ void VulkanInit::mainLoop() {
     std::mt19937 gen(rd());
     std::uniform_real_distribution<float> distributionPosition(-1.0f, 1.0f);
     std::uniform_real_distribution<float> distributionColor(0.0f, 1.0f);
-    std::uniform_real_distribution<float> distributionSize(0.1f, 0.1f);
     std::uniform_real_distribution<float> distributionVelocity(-5.0f, 5.0f);
-    std::uniform_real_distribution<float> distributionMass(1.0f, 1.0f);
 
     // Test code
     Physics::Engine::IPhysicsEngine* engine = new Physics::Engine::PhysicsEngine();
@@ -161,13 +159,11 @@ void VulkanInit::mainLoop() {
 
     for (unsigned i = 0; i < 10; i++)
     {
-        IRigidObject* rigidBody = new SquareRigidObject();
+        IRigidObject* rigidBody = new GasMoleculeRigidObject();
         IShape* shape = dynamic_cast<IShape*>(rigidBody);
         shape->SetPosition(glm::vec2(distributionPosition(gen), distributionPosition(gen)));
-        shape->SetSize(distributionSize(gen));
         shape->SetColor(glm::vec3(distributionColor(gen), distributionColor(gen), distributionColor(gen)));
         rigidBody->SetVelocity(glm::vec2(distributionVelocity(gen), distributionVelocity(gen)));
-        rigidBody->SetMass(distributionMass(gen));
 
         engine->AddRigidObject(rigidBody);
     }
