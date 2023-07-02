@@ -7,6 +7,7 @@
 #include "./Physics/Engine/PhysicsEngine.h"
 #include "./Physics/RigidObjects/GasMoleculeRigidObject.h"
 #include "./Physics/RigidObjects/IRigidObject.h"
+#include "./Physics/PhysicsConfiguration.h"
 #include <random>
 
 using namespace Physics::RigidObjects;
@@ -138,26 +139,22 @@ void VulkanInit::mainLoop() {
     // Test code
     Physics::Engine::IPhysicsEngine* engine = new Physics::Engine::PhysicsEngine();
     /*
-    IRigidObject* rigidBody = new SquareRigidObject();
+    IRigidObject* rigidBody = new GasMoleculeRigidObject();
     IShape* shape = dynamic_cast<IShape*>(rigidBody);
     shape->SetPosition(glm::vec2(-0.5f, 0.0f));
-    shape->SetSize(0.1f);
     shape->SetColor(glm::vec3(distributionColor(gen), distributionColor(gen), distributionColor(gen)));
-    rigidBody->SetVelocity(glm::vec2(0.5f, 0.0f));
-    rigidBody->SetMass(1.0f);
+    rigidBody->SetVelocity(glm::vec2(1.0f, 0.0f));
     engine->AddRigidObject(rigidBody);
 
-    rigidBody = new SquareRigidObject();
+    rigidBody = new GasMoleculeRigidObject();
     shape = dynamic_cast<IShape*>(rigidBody);
     shape->SetPosition(glm::vec2(0.0f, 0.0f));
-    shape->SetSize(0.1f);
     shape->SetColor(glm::vec3(distributionColor(gen), distributionColor(gen), distributionColor(gen)));
-    rigidBody->SetVelocity(glm::vec2(0.0f, 0.0f));
-    rigidBody->SetMass(1.0f);
+    rigidBody->SetVelocity(glm::vec2(-0.2f, 0.0f));
     engine->AddRigidObject(rigidBody);
     */
 
-    for (unsigned i = 0; i < 10; i++)
+    for (unsigned i = 0; i < Physics::PhysicsConfiguration::GasMoleculeCount; i++)
     {
         IRigidObject* rigidBody = new GasMoleculeRigidObject();
         IShape* shape = dynamic_cast<IShape*>(rigidBody);

@@ -24,22 +24,17 @@ void PhysicsEngine::PhysicsTick(float timeDelta)
 	{
 		rigidObjects[i]->PhysicsTick(timeDelta);
 
-		TickCollisionDetection(timeDelta);
+		ResolveMoleculeCollisions(timeDelta);
+		ResolveWallCollisions(timeDelta);
 	}
 }
 
-void PhysicsEngine::TickCollisionDetection(float timeDelta)
+void PhysicsEngine::ResolveMoleculeCollisions(float timeDelta)
 {
-	glm::vec2 first{-1.0f, 1.0f};
-	glm::vec2 second{2.0f, 3.0f};
-	glm::vec2 result = first - second;
-	glm::vec2 resultTwo = second + first;
-	glm::vec2 absOne = glm::abs(result);
-	glm::vec2 absTwo = glm::abs(resultTwo);
+	const float epsilon = 0.001f;
 	static const float moleculeRadius = PhysicsConfiguration::GasMoleculeDiameter / 2.0f;
 	static const float moleculeMass = PhysicsConfiguration::GasMoleculeMass;
 
-	const float epsilon = 0.001f;
 	// Resolve collisions
 	for (unsigned i = 0; i < rigidObjects.size(); i++)
 	{
@@ -53,7 +48,7 @@ void PhysicsEngine::TickCollisionDetection(float timeDelta)
 			if (i != j && shape1->Intersects(shape2))
 			{
 				// Calculate the relative velocity
-				glm::vec2 relativeVelocity = glm::abs(ro2->GetVelocity() - ro1->GetVelocity());
+				glm::vec2 relativeVelocity = ro2->GetVelocity() - ro1->GetVelocity();
 
 				// Calculate the distance between the centers of the circles
 				glm::vec2 displacement = shape2->GetPosition() - shape1->GetPosition();
@@ -62,6 +57,14 @@ void PhysicsEngine::TickCollisionDetection(float timeDelta)
 				// Calculate the unit normal and tangential vectors
 				glm::vec2 normal = displacement / distance;
 				glm::vec2 tangential(-normal.y, normal.x);
+
+				// Exchange the relativy velocity between the two molecules
+				float velocityMagnitude = glm::dot(relativeVelocity, normal);
+				glm::vec2 velocityAdjustment = velocityMagnitude * normal;
+				ro1->AddVelocity(velocityAdjustment);
+				ro2->AddVelocity(-velocityAdjustment);
+
+				/*
 
 				// Calculate the normal and tangential components of the relative velocity
 				float relativeVelocityNormal = glm::dot(relativeVelocity, normal);
@@ -74,13 +77,6 @@ void PhysicsEngine::TickCollisionDetection(float timeDelta)
 				// Apply the impulse to update the velocities
 				ro1->AddVelocity((impulseMagnitude / moleculeMass) * normal);
 				ro2->AddVelocity(-(impulseMagnitude / moleculeMass) * normal);
-
-				// Apply friction to update the tangential component of the velocities
-				/*
-				const float frictionCoefficient = 0.8f;
-				glm::vec2 frictionImpulse = -(frictionCoefficient * relativeVelocityTangential) * tangential;
-				circle1.velocity += (frictionImpulse / circle1.mass);
-				circle2.velocity += (frictionImpulse / circle2.mass);
 				*/
 
 				// Separate the circles to avoid overlapping
@@ -91,6 +87,12 @@ void PhysicsEngine::TickCollisionDetection(float timeDelta)
 			}
 		}
 	}
+}
+
+void PhysicsEngine::ResolveWallCollisions(float timeDelta)
+{
+	const float epsilon = 0.001f;
+	static const float moleculeRadius = PhysicsConfiguration::GasMoleculeDiameter / 2.0f;
 
 	// Resolve wall collisions
 	for (unsigned i = 0; i < rigidObjects.size(); i++)
@@ -103,7 +105,7 @@ void PhysicsEngine::TickCollisionDetection(float timeDelta)
 
 		if ((position.x + moleculeRadius) > 1.0f)
 		{
-			position.x = (position.x - moleculeRadius - epsilon);
+			position.x = (1.0f - moleculeRadius - epsilon);
 			shape1->SetPosition(position);
 			if (velocity.x > 0)
 			{
@@ -121,7 +123,7 @@ void PhysicsEngine::TickCollisionDetection(float timeDelta)
 				ro1->SetVelocity(velocity);
 			}
 		}
-		
+
 		if ((position.y + moleculeRadius) > 1.0f)
 		{
 			position.y = (1.0f - moleculeRadius - epsilon);

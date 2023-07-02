@@ -23,7 +23,8 @@ namespace Physics::Engine
 		std::vector<VulkanInit::Vertex> GetVertices();
 
 	private:
-		void TickCollisionDetection(float timeDelta);
+		void ResolveWallCollisions(float timeDelta);
+		void ResolveMoleculeCollisions(float timeDelta);
 
 	private:
 		std::vector<IRigidObject*> rigidObjects;
