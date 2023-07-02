@@ -21,21 +21,19 @@ GasMolecule::GasMolecule() :
 bool GasMolecule::Intersects(IShape* shape)
 {
     static const float sumRadii = PhysicsConfiguration::GasMoleculeDiameter;
+    static const float sumRadiiSquare = sumRadii * sumRadii;
 
     glm::vec2 shapePos = shape->GetPosition();
 
     // Calculate the distance between the centers of the circles
-    float distance = glm::distance(m_position, shapePos);
-
+    // distance = sqrt((x2 - x1)^2 + (y2 - y1)^2)
+    // sqrt((x2 - x1)^2 + (y2 - y1)^2) <= sumRadii
+    // 
+    // Optimization: ^2 to get rid of sqrt
+    // (x2 - x1)^2 + (y2 - y1)^2 <= sumRadii^2
+    // (x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1) <= sumRadii^2
     // Check if the circles intersect
-    if (distance <= sumRadii)
-    {
-        return true;  // Circles intersect
-    }
-    else
-    {
-        return false; // Circles do not intersect
-    }
+    return ((shapePos.x - m_position.x) * (shapePos.x - m_position.x) + (shapePos.y - m_position.y) * (shapePos.y - m_position.y) <= sumRadiiSquare);
 }
 
 std::vector<VulkanInit::Vertex> GasMolecule::GetVertices()
