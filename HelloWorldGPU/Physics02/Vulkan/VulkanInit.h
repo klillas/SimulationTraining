@@ -75,6 +75,14 @@ public:
         std::vector<VkPresentModeKHR> presentModes;
     };
 
+    /// <summary>
+    /// Called each time a frame has finished rendering
+    /// First parameter is the time in milliseconds since last frame was rendered
+    /// </summary>
+    typedef void(*VulkanFrameRenderedCallback)(unsigned);
+
+    void RegisterVulkanFrameRenderedCallback(VulkanFrameRenderedCallback callback);
+
     void run();
 
     void initWindow();
@@ -190,5 +198,7 @@ private:
 
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
+
+    VulkanFrameRenderedCallback m_VulkanFrameRenderedCallback;
 };
 

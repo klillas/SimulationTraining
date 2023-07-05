@@ -34,6 +34,13 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
     }
 }
 
+void VulkanInit::RegisterVulkanFrameRenderedCallback(VulkanFrameRenderedCallback callback)
+{
+    assert(callback);
+    assert(!m_VulkanFrameRenderedCallback);
+
+    m_VulkanFrameRenderedCallback = callback;
+}
 
 void VulkanInit::run() {
     initWindow();
@@ -186,19 +193,10 @@ void VulkanInit::mainLoop() {
         frameCounter++;
         endTime = std::chrono::high_resolution_clock::now();
         long duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
-        if (duration_ms >= 1000)
+        if (m_VulkanFrameRenderedCallback != nullptr)
         {
-            std::string str = "Frames per second: ";
-            // Convert float to string
-            std::stringstream ss;
-            ss << std::fixed << std::setprecision(1) << (frameCounter * 1000.0f / duration_ms);
-            std::string floatString = ss.str();
-
-            // Concatenate the string and float string
-            std::string result = str + floatString;
-            debug->Print(&result);
-
-            frameCounter = 0;
+            startTime = std::chrono::high_resolution_clock::now();
+            m_VulkanFrameRenderedCallback(duration_ms);
         }
     }
 

@@ -15,10 +15,40 @@
 #include <set>
 */
 
+#include <sstream>
+#include <iomanip>
 #include "Vulkan/VulkanInit.h"
+#include "./Debug/DebugOutput.h"
+
+void VulkanFrameRenderedCallback(unsigned frametime_ms)
+{
+    static unsigned frametime_total = 0;
+    static unsigned framecounter = 0;
+    static Debug::DebugOutput* debug = Debug::DebugOutput::GetInstance();
+
+    frametime_total += frametime_ms;
+    framecounter++;
+
+    if (frametime_total >= 1000)
+    {
+        std::string str = "Frames per second: ";
+        // Convert float to string
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision(1) << (framecounter * 1000.0f / frametime_total);
+        std::string floatString = ss.str();
+
+        // Concatenate the string and float string
+        std::string result = str + floatString;
+        debug->Print(&result);
+
+        framecounter = 0;
+        frametime_total = 0;
+    }
+}
 
 int main() {
     VulkanInit app;
+    app.RegisterVulkanFrameRenderedCallback(VulkanFrameRenderedCallback);
 
     try {
         app.run();
