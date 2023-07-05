@@ -7,7 +7,7 @@ using namespace Physics::Engine;
 using namespace Physics::Shapes;
 
 PhysicsEngine::PhysicsEngine()
-	: rigidObjects({})
+	: m_gasMolecules({})
 	, m_vertices({})
 {
 	
@@ -15,15 +15,15 @@ PhysicsEngine::PhysicsEngine()
 
 void PhysicsEngine::AddRigidObject(IRigidObject* rigidObject)
 {
-	rigidObjects.push_back(rigidObject);
+	m_gasMolecules.push_back(rigidObject);
 }
 
 void PhysicsEngine::PhysicsTick(float timeDelta)
 {
 	// Move objects according to their velocities
-	for (unsigned i = 0; i < rigidObjects.size(); i++)
+	for (unsigned i = 0; i < m_gasMolecules.size(); i++)
 	{
-		rigidObjects[i]->PhysicsTick(timeDelta);
+		m_gasMolecules[i]->PhysicsTick(timeDelta);
 
 		ResolveMoleculeCollisions(timeDelta);
 		ResolveWallCollisions(timeDelta);
@@ -37,15 +37,15 @@ void PhysicsEngine::ResolveMoleculeCollisions(float timeDelta)
 	static const float moleculeMass = PhysicsConfiguration::GasMoleculeMass;
 
 	// Resolve collisions
-	for (unsigned i = 0; i < rigidObjects.size(); i++)
+	for (unsigned i = 0; i < m_gasMolecules.size(); i++)
 	{
-		IRigidObject* ro1 = rigidObjects[i];
+		IRigidObject* ro1 = m_gasMolecules[i];
 		// TODO: This dynamic casting to IShape all over the place needs to stop
-		IShape* shape1 = (dynamic_cast<IShape*>(rigidObjects[i]));
-		for (unsigned j = 0; j < rigidObjects.size(); j++)
+		IShape* shape1 = (dynamic_cast<IShape*>(m_gasMolecules[i]));
+		for (unsigned j = 0; j < m_gasMolecules.size(); j++)
 		{
-			IRigidObject* ro2 = rigidObjects[j];
-			IShape* shape2 = (dynamic_cast<IShape*>(rigidObjects[j]));
+			IRigidObject* ro2 = m_gasMolecules[j];
+			IShape* shape2 = (dynamic_cast<IShape*>(m_gasMolecules[j]));
 			if (i != j && shape1->Intersects(shape2))
 			{
 				// Calculate the relative velocity
@@ -81,11 +81,11 @@ void PhysicsEngine::ResolveWallCollisions(float timeDelta)
 	static const float moleculeRadius = PhysicsConfiguration::GasMoleculeDiameter / 2.0f;
 
 	// Resolve wall collisions
-	for (unsigned i = 0; i < rigidObjects.size(); i++)
+	for (unsigned i = 0; i < m_gasMolecules.size(); i++)
 	{
-		IRigidObject* ro1 = rigidObjects[i];
+		IRigidObject* ro1 = m_gasMolecules[i];
 		// TODO: This dynamic casting to IShape all over the place needs to stop
-		IShape* shape1 = (dynamic_cast<IShape*>(rigidObjects[i]));
+		IShape* shape1 = (dynamic_cast<IShape*>(m_gasMolecules[i]));
 		glm::vec2 position = shape1->GetPosition();
 		glm::vec2 velocity = ro1->GetVelocity();
 
@@ -136,9 +136,9 @@ void PhysicsEngine::ResolveWallCollisions(float timeDelta)
 std::vector<VulkanInit::Vertex> PhysicsEngine::GetVertices()
 {
 	m_vertices.clear();
-	for (unsigned i = 0; i < rigidObjects.size(); i++)
+	for (unsigned i = 0; i < m_gasMolecules.size(); i++)
 	{
-		std::vector<VulkanInit::Vertex> shapeVertices = (dynamic_cast<IShape*>(rigidObjects[i]))->GetVertices();
+		std::vector<VulkanInit::Vertex> shapeVertices = (dynamic_cast<IShape*>(m_gasMolecules[i]))->GetVertices();
 		m_vertices.insert(m_vertices.end(), shapeVertices.begin(), shapeVertices.end());
 	}
 

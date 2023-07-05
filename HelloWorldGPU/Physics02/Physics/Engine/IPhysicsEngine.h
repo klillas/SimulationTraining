@@ -1,6 +1,6 @@
 #pragma once
 
-#include "./Physics/RigidObjects/IRigidObject.h"
+#include "Physics/RigidObjects/GasMolecules.h"
 
 using namespace Physics::RigidObjects;
 
@@ -9,7 +9,7 @@ namespace Physics::Engine
 	class IPhysicsEngine
 	{
 	public:
-		virtual void AddRigidObject(IRigidObject* rigidObject) = 0;
+		virtual void AddGasMolecule(GasMolecules::GasMolecule* rigidObject) = 0;
 
 		virtual void PhysicsTick(float timeDelta) = 0;
 

@@ -171,10 +171,9 @@ D:\development\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(Ou
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Debug\DebugOutput.cpp" />
-    <ClCompile Include="Physics\Shapes\GasMolecule.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Physics\Engine\PhysicsEngine.cpp" />
-    <ClCompile Include="Physics\RigidObjects\GasMoleculeRigidObject.cpp" />
+    <ClCompile Include="Physics\RigidObjects\GasMolecules.cpp" />
     <ClCompile Include="Vulkan\VulkanInit.cpp" />
     <ClCompile Include="Vulkan\VulkanRunner.cpp" />
   </ItemGroup>
@@ -186,11 +185,8 @@ D:\development\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(Ou
     <ClInclude Include="Debug\DebugOutput.h" />
     <ClInclude Include="Physics\PhysicsConfiguration.h" />
     <ClInclude Include="Physics\Engine\IPhysicsEngine.h" />
-    <ClInclude Include="Physics\RigidObjects\IRigidObject.h" />
-    <ClInclude Include="Physics\Shapes\IShape.h" />
-    <ClInclude Include="Physics\Shapes\GasMolecule.h" />
     <ClInclude Include="Physics\Engine\PhysicsEngine.h" />
-    <ClInclude Include="Physics\RigidObjects\GasMoleculeRigidObject.h" />
+    <ClInclude Include="Physics\RigidObjects\GasMolecules.h" />
     <ClInclude Include="Vulkan\VulkanInit.h" />
     <ClInclude Include="Vulkan\VulkanRunner.h" />
   </ItemGroup>

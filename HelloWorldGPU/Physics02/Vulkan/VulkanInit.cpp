@@ -5,15 +5,12 @@
 #include <fstream>
 #include "./Physics/Engine/IPhysicsEngine.h"
 #include "./Physics/Engine/PhysicsEngine.h"
-#include "./Physics/RigidObjects/GasMoleculeRigidObject.h"
-#include "./Physics/RigidObjects/IRigidObject.h"
 #include "./Physics/PhysicsConfiguration.h"
 #include "./Debug/DebugOutput.h"
 #include <random>
 #include <chrono>
 
 using namespace Physics::RigidObjects;
-using namespace Physics::Shapes;
 
 constexpr size_t MaxVertices = 100000000;
 
@@ -159,13 +156,12 @@ void VulkanInit::mainLoop() {
 
     for (unsigned i = 0; i < Physics::PhysicsConfiguration::GasMoleculeCount; i++)
     {
-        IRigidObject* rigidBody = new GasMoleculeRigidObject();
-        IShape* shape = dynamic_cast<IShape*>(rigidBody);
-        shape->SetPosition(glm::vec2(distributionPosition(gen), distributionPosition(gen)));
-        shape->SetColor(glm::vec3(distributionColor(gen), distributionColor(gen), distributionColor(gen)));
-        rigidBody->SetVelocity(glm::vec2(distributionVelocity(gen), distributionVelocity(gen)));
+        GasMolecules::GasMolecule* gasMolecule = new GasMolecules::GasMolecule();
+        gasMolecule->position = glm::vec2(distributionPosition(gen), distributionPosition(gen));
+        gasMolecule->color = glm::vec3(distributionColor(gen), distributionColor(gen), distributionColor(gen));
+        gasMolecule->velocity = glm::vec2(distributionVelocity(gen), distributionVelocity(gen));
 
-        engine->AddRigidObject(rigidBody);
+        engine->AddGasMolecule(gasMolecule);
     }
 
     unsigned frameCounter = 0;

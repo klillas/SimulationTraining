@@ -1,8 +1,7 @@
 #pragma once
 
-#include "./Physics/RigidObjects/IRigidObject.h"
 #include "IPhysicsEngine.h"
-#include "./Physics/RigidObjects/IRigidObject.h"
+#include "Physics/RigidObjects/GasMolecules.h"
 
 #include <glm/glm.hpp>
 #include <vector>
@@ -16,7 +15,7 @@ namespace Physics::Engine
 	public:
 		PhysicsEngine();
 
-		void AddRigidObject(IRigidObject* rigidObject);
+		void AddGasMolecule(GasMolecules::GasMolecule* rigidObject);
 
 		void PhysicsTick(float timeDelta);
 
@@ -27,7 +26,7 @@ namespace Physics::Engine
 		void ResolveMoleculeCollisions(float timeDelta);
 
 	private:
-		std::vector<IRigidObject*> rigidObjects;
+		std::vector<GasMolecules::GasMolecule*> m_gasMolecules;
 		std::vector<VulkanInit::Vertex> m_vertices;
 	};
 };

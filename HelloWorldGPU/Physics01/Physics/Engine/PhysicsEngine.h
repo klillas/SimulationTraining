@@ -27,7 +27,7 @@ namespace Physics::Engine
 		void ResolveMoleculeCollisions(float timeDelta);
 
 	private:
-		std::vector<IRigidObject*> rigidObjects;
+		std::vector<IRigidObject*> m_gasMolecules;
 		std::vector<VulkanInit::Vertex> m_vertices;
 	};
 };
