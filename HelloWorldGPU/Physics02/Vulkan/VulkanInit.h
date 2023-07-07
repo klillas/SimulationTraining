@@ -81,7 +81,21 @@ public:
     /// </summary>
     typedef void(*VulkanFrameRenderedCallback)(unsigned);
 
+    /// <summary>
+    /// Called just before a new frame is rendered
+    /// </summary>
+    typedef void(*VulkanFrameRenderStartCallback)();
+
+    /// <summary>
+    /// Fetches the vertices to send to GPU for the next frame
+    /// </summary>
+    typedef void(*VulkanGetVerticesCallback)(std::vector<VulkanInit::Vertex>*);
+
     void RegisterVulkanFrameRenderedCallback(VulkanFrameRenderedCallback callback);
+
+    void RegisterVulkanFrameRenderStartCallback(VulkanFrameRenderStartCallback callback);
+
+    void RegisterVulkanGetVerticesCallback(VulkanGetVerticesCallback callback);
 
     void run();
 
@@ -200,5 +214,7 @@ private:
     VkDeviceMemory vertexBufferMemory;
 
     VulkanFrameRenderedCallback m_VulkanFrameRenderedCallback;
+    VulkanGetVerticesCallback m_VulkanGetVerticesCallback;
+    VulkanFrameRenderStartCallback m_VulkanFrameRenderStartCallback;
 };
 

@@ -3,14 +3,7 @@
 #include <set>
 #include <algorithm>
 #include <fstream>
-#include "./Physics/Engine/IPhysicsEngine.h"
-#include "./Physics/Engine/PhysicsEngine.h"
-#include "./Physics/PhysicsConfiguration.h"
-#include "./Debug/DebugOutput.h"
-#include <random>
 #include <chrono>
-
-using namespace Physics::RigidObjects;
 
 constexpr size_t MaxVertices = 100000000;
 
@@ -40,6 +33,22 @@ void VulkanInit::RegisterVulkanFrameRenderedCallback(VulkanFrameRenderedCallback
     assert(!m_VulkanFrameRenderedCallback);
 
     m_VulkanFrameRenderedCallback = callback;
+}
+
+void VulkanInit::RegisterVulkanFrameRenderStartCallback(VulkanFrameRenderStartCallback callback)
+{
+    assert(callback);
+    assert(!m_VulkanFrameRenderStartCallback);
+
+    m_VulkanFrameRenderStartCallback = callback;
+}
+
+void VulkanInit::RegisterVulkanGetVerticesCallback(VulkanGetVerticesCallback callback)
+{
+    assert(callback);
+    assert(!m_VulkanGetVerticesCallback);
+
+    m_VulkanGetVerticesCallback = callback;
 }
 
 void VulkanInit::run() {
@@ -109,6 +118,8 @@ void VulkanInit::createVertexBuffer() {
 
 void VulkanInit::updateVertexBuffer()
 {
+    m_VulkanGetVerticesCallback(&vertices);
+
     VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
     // Map the vertex buffer memory
@@ -136,15 +147,7 @@ uint32_t VulkanInit::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags p
 }
 
 void VulkanInit::mainLoop() {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> distributionPosition(-1.0f, 1.0f);
-    std::uniform_real_distribution<float> distributionColor(0.0f, 1.0f);
-    std::uniform_real_distribution<float> distributionVelocity(-5.0f, 5.0f);
-
     // Test code
-    Debug::DebugOutput* debug = Debug::DebugOutput::GetInstance();
-    Physics::Engine::IPhysicsEngine* engine = new Physics::Engine::PhysicsEngine();
     /*
     IRigidObject* rigidBody = new GasMoleculeRigidObject();
     IShape* shape = dynamic_cast<IShape*>(rigidBody);
@@ -161,16 +164,6 @@ void VulkanInit::mainLoop() {
     engine->AddRigidObject(rigidBody);
     */
 
-    for (unsigned i = 0; i < Physics::PhysicsConfiguration::GasMoleculeCount; i++)
-    {
-        GasMolecules::GasMolecule* gasMolecule = new GasMolecules::GasMolecule();
-        gasMolecule->position = glm::vec2(distributionPosition(gen), distributionPosition(gen));
-        gasMolecule->color = glm::vec3(distributionColor(gen), distributionColor(gen), distributionColor(gen));
-        gasMolecule->velocity = glm::vec2(distributionVelocity(gen), distributionVelocity(gen));
-
-        engine->AddGasMolecule(gasMolecule);
-    }
-
     unsigned frameCounter = 0;
     auto startTime = std::chrono::high_resolution_clock::now();
     auto endTime = std::chrono::high_resolution_clock::now();
@@ -180,11 +173,7 @@ void VulkanInit::mainLoop() {
             startTime = std::chrono::high_resolution_clock::now();
         }
 
-        engine->PhysicsTick(0.01f);
-
-        vertices.clear();
-        std::vector<VulkanInit::Vertex> newVerts = engine->GetVertices();
-        vertices.insert(vertices.end(), newVerts.begin(), newVerts.end());
+        m_VulkanFrameRenderStartCallback();
 
         glfwPollEvents();
         updateVertexBuffer();

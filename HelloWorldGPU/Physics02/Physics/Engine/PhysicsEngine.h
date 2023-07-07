@@ -17,6 +17,8 @@ namespace Physics::Engine
 
 		void AddGasMolecule(GasMolecules::GasMolecule* rigidObject);
 
+		unsigned GasMoleculeCount();
+
 		void PhysicsTick(float timeDelta);
 
 		std::vector<VulkanInit::Vertex> GetVertices();

@@ -17,16 +17,21 @@ void PhysicsEngine::AddGasMolecule(GasMolecules::GasMolecule* rigidObject)
 	m_gasMolecules.push_back(rigidObject);
 }
 
+unsigned PhysicsEngine::GasMoleculeCount()
+{
+	return m_gasMolecules.size();
+}
+
 void PhysicsEngine::PhysicsTick(float timeDelta)
 {
 	// Move objects according to their velocities
 	for (unsigned i = 0; i < m_gasMolecules.size(); i++)
 	{
 		GasMolecules::PhysicsTick(timeDelta, m_gasMolecules[i]);
-
-		ResolveMoleculeCollisions(timeDelta);
-		ResolveWallCollisions(timeDelta);
 	}
+
+	ResolveMoleculeCollisions(timeDelta);
+	ResolveWallCollisions(timeDelta);
 }
 
 void PhysicsEngine::ResolveMoleculeCollisions(float timeDelta)

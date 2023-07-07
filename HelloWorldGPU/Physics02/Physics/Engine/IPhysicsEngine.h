@@ -11,6 +11,8 @@ namespace Physics::Engine
 	public:
 		virtual void AddGasMolecule(GasMolecules::GasMolecule* rigidObject) = 0;
 
+		virtual unsigned GasMoleculeCount() = 0;
+
 		virtual void PhysicsTick(float timeDelta) = 0;
 
 		virtual std::vector<VulkanInit::Vertex> GetVertices() = 0;
