@@ -147,23 +147,6 @@ uint32_t VulkanInit::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags p
 }
 
 void VulkanInit::mainLoop() {
-    // Test code
-    /*
-    IRigidObject* rigidBody = new GasMoleculeRigidObject();
-    IShape* shape = dynamic_cast<IShape*>(rigidBody);
-    shape->SetPosition(glm::vec2(-0.5f, 0.0f));
-    shape->SetColor(glm::vec3(distributionColor(gen), distributionColor(gen), distributionColor(gen)));
-    rigidBody->SetVelocity(glm::vec2(1.0f, 0.0f));
-    engine->AddRigidObject(rigidBody);
-
-    rigidBody = new GasMoleculeRigidObject();
-    shape = dynamic_cast<IShape*>(rigidBody);
-    shape->SetPosition(glm::vec2(0.0f, 0.0f));
-    shape->SetColor(glm::vec3(distributionColor(gen), distributionColor(gen), distributionColor(gen)));
-    rigidBody->SetVelocity(glm::vec2(-0.2f, 0.0f));
-    engine->AddRigidObject(rigidBody);
-    */
-
     unsigned frameCounter = 0;
     auto startTime = std::chrono::high_resolution_clock::now();
     auto endTime = std::chrono::high_resolution_clock::now();

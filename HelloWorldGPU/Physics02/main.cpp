@@ -15,6 +15,8 @@
 #include <set>
 */
 
+#define RUN_TEST_ID 1
+
 #include <sstream>
 #include <iomanip>
 #include "Vulkan/VulkanInit.h"
@@ -57,6 +59,7 @@ void VulkanFrameRenderedCallback(unsigned frametime_ms)
         std::string result = str + floatString;
         debug->Print(&result);
 
+#if RUN_TEST_ID == 1
         if (framesPerSecond > 55)
         {
             unsigned newMoleculeSize = engine->GasMoleculeCount() * 0.05f + 1;
@@ -70,6 +73,7 @@ void VulkanFrameRenderedCallback(unsigned frametime_ms)
                 engine->AddGasMolecule(gasMolecule);
             }
         }
+#endif
 
         std::string str2 = "Molecules: ";
         // Convert float to string
@@ -103,6 +107,7 @@ int main() {
     app.RegisterVulkanFrameRenderStartCallback(VulkanFrameRenderStartCallback);
     app.RegisterVulkanGetVerticesCallback(VulkanGetVerticesCallback);
 
+#if RUN_TEST_ID == 1
     for (unsigned i = 0; i < Physics::PhysicsConfiguration::GasMoleculeCount; i++)
     {
         GasMolecules::GasMolecule* gasMolecule = new GasMolecules::GasMolecule();
@@ -112,6 +117,21 @@ int main() {
 
         engine->AddGasMolecule(gasMolecule);
     }
+#endif
+
+#if RUN_TEST_ID == 0
+    GasMolecules::GasMolecule* gasMolecule = new GasMolecules::GasMolecule();
+    gasMolecule->position = glm::vec2(-0.5f, 0.0f);
+    gasMolecule->color = glm::vec3(distributionColor(gen), distributionColor(gen), distributionColor(gen));
+    gasMolecule->velocity = glm::vec2(1.0f, 0.0f);
+    engine->AddGasMolecule(gasMolecule);
+
+    gasMolecule = new GasMolecules::GasMolecule();
+    gasMolecule->position = glm::vec2(-0.0f, 0.0f);
+    gasMolecule->color = glm::vec3(distributionColor(gen), distributionColor(gen), distributionColor(gen));
+    gasMolecule->velocity = glm::vec2(-0.2f, 0.0f);
+    engine->AddGasMolecule(gasMolecule);
+#endif
 
     try {
         app.run();

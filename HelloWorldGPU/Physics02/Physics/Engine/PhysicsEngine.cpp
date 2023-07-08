@@ -41,10 +41,11 @@ void PhysicsEngine::ResolveMoleculeCollisions(float timeDelta)
 	static const float moleculeMass = PhysicsConfiguration::GasMoleculeMass;
 
 	// Resolve collisions
-	for (unsigned i = 0; i < m_gasMolecules.size(); i++)
+	unsigned moleculesCount = m_gasMolecules.size();
+	for (unsigned i = 0; i < moleculesCount; i++)
 	{
 		GasMolecules::GasMolecule* ro1 = m_gasMolecules[i];
-		for (unsigned j = 0; j < m_gasMolecules.size(); j++)
+		for (unsigned j = 0; j < moleculesCount; j++)
 		{
 			GasMolecules::GasMolecule* ro2 = m_gasMolecules[j];
 			if (i != j && GasMolecules::Intersects(ro1, ro2))

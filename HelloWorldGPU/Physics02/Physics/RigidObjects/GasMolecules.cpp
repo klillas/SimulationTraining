@@ -12,6 +12,9 @@ bool GasMolecules::Intersects(GasMolecule* moleculeOne, GasMolecule* moleculeTwo
 {
     static const float sumRadii = PhysicsConfiguration::GasMoleculeDiameter;
     static const float sumRadiiSquare = sumRadii * sumRadii;
+    static float dx = 0.0f;
+    static float dy = 0.0f;
+    static float squaredDistance = 0.0f;
 
     // Calculate the distance between the centers of the circles
     // distance = sqrt((x2 - x1)^2 + (y2 - y1)^2)
@@ -21,8 +24,12 @@ bool GasMolecules::Intersects(GasMolecule* moleculeOne, GasMolecule* moleculeTwo
     // (x2 - x1)^2 + (y2 - y1)^2 <= sumRadii^2
     // (x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1) <= sumRadii^2
     // Check if the circles intersect
-    return (    (moleculeOne->position.x - moleculeTwo->position.x) * (moleculeOne->position.x - moleculeTwo->position.x) 
-                + (moleculeOne->position.y - moleculeTwo->position.y) * (moleculeOne->position.y - moleculeTwo->position.y) <= sumRadiiSquare);
+
+    dx = moleculeOne->position.x - moleculeTwo->position.x;
+    dy = moleculeOne->position.y - moleculeTwo->position.y;
+    squaredDistance = (dx * dx) + (dy * dy) + 10.0f;
+
+    return squaredDistance < sumRadiiSquare;
 }
 
 void GasMolecules::GetVertices(GasMolecule* gasMolecule, std::vector<VulkanInit::Vertex>* vertexVector)
