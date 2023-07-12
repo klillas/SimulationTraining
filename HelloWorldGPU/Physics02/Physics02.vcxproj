@@ -180,6 +180,7 @@ D:\development\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(Ou
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Physics\Engine\PhysicsEngine.cpp" />
     <ClCompile Include="Physics\RigidObjects\GasMolecules.cpp" />
+    <ClCompile Include="Physics\SpaceGrid\SpaceGridMolecules.cpp" />
     <ClCompile Include="Vulkan\VulkanInit.cpp" />
     <ClCompile Include="Vulkan\VulkanRunner.cpp" />
   </ItemGroup>
@@ -193,6 +194,7 @@ D:\development\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(Ou
     <ClInclude Include="Physics\Engine\IPhysicsEngine.h" />
     <ClInclude Include="Physics\Engine\PhysicsEngine.h" />
     <ClInclude Include="Physics\RigidObjects\GasMolecules.h" />
+    <ClInclude Include="Physics\SpaceGrid\SpaceGridMolecules.h" />
     <ClInclude Include="Vulkan\VulkanInit.h" />
     <ClInclude Include="Vulkan\VulkanRunner.h" />
   </ItemGroup>

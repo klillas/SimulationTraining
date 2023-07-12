@@ -157,7 +157,7 @@ void VulkanInit::mainLoop() {
     engine->AddRigidObject(rigidBody);
     */
 
-    for (unsigned i = 0; i < Physics::PhysicsConfiguration::GasMoleculeCount; i++)
+    for (unsigned i = 0; i < Physics::PhysicsConfiguration::GasMoleculeStartCount; i++)
     {
         IRigidObject* rigidBody = new GasMoleculeRigidObject();
         IShape* shape = dynamic_cast<IShape*>(rigidBody);

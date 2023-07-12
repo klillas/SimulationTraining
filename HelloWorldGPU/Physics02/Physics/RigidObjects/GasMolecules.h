@@ -14,6 +14,23 @@ namespace Physics::RigidObjects
 			glm::vec2 position;
 			glm::vec3 color;
 			glm::vec2 velocity;
+			
+			/// <summary>
+			/// Next item in the SpaceGridMolecules cell
+			/// </summary>
+			GasMolecule* nextItem;
+			/// <summary>
+			/// Previous item in the SpaceGridMolecules cell
+			/// </summary>
+			GasMolecule* previousItem;
+			/// <summary>
+			/// x index of the current Cell which hosts this GasMolecule
+			/// </summary>
+			unsigned cellIndexX;
+			/// <summary>
+			/// y index of the current Cell which hosts this GasMolecule
+			/// </summary>
+			unsigned cellIndexY;
 		};
 
 	public:

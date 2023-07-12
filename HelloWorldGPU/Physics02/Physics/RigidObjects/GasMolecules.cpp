@@ -27,7 +27,9 @@ bool GasMolecules::Intersects(GasMolecule* moleculeOne, GasMolecule* moleculeTwo
 
     dx = moleculeOne->position.x - moleculeTwo->position.x;
     dy = moleculeOne->position.y - moleculeTwo->position.y;
-    squaredDistance = (dx * dx) + (dy * dy) + 10.0f;
+
+    // Both dx and dy are within sumRadii. Check if we actually intersect
+    squaredDistance = (dx * dx) + (dy * dy);
 
     return squaredDistance < sumRadiiSquare;
 }

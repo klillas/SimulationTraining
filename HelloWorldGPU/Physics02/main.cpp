@@ -25,6 +25,7 @@
 #include "./Physics/Engine/PhysicsEngine.h"
 #include "./Physics/PhysicsConfiguration.h"
 #include <random>
+#include <glm/glm.hpp>
 
 using namespace Physics::RigidObjects;
 
@@ -108,7 +109,7 @@ int main() {
     app.RegisterVulkanGetVerticesCallback(VulkanGetVerticesCallback);
 
 #if RUN_TEST_ID == 1
-    for (unsigned i = 0; i < Physics::PhysicsConfiguration::GasMoleculeCount; i++)
+    for (unsigned i = 0; i < Physics::PhysicsConfiguration::GasMoleculeStartCount; i++)
     {
         GasMolecules::GasMolecule* gasMolecule = new GasMolecules::GasMolecule();
         gasMolecule->position = glm::vec2(distributionPosition(gen), distributionPosition(gen));
