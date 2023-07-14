@@ -13,7 +13,7 @@ namespace Physics::Engine
 
 		virtual unsigned GasMoleculeCount() = 0;
 
-		virtual void PhysicsTick(float timeDelta) = 0;
+		virtual void PhysicsTick(float timeDelta, unsigned subticks) = 0;
 
 		virtual std::vector<VulkanInit::Vertex> GetVertices() = 0;
 	};

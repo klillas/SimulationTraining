@@ -38,6 +38,20 @@ namespace Physics::SpaceGrid
 
 		Cell* GetCell(unsigned indexX, unsigned indexY);
 
+		void RemoveGasMolecule(GasMolecules::GasMolecule* molecule);
+
+		/// <summary>
+		/// Temporarily hides a gas molecule in a cell. Can be shown again in the cell with ShowGasMolecule
+		/// </summary>
+		/// <param name="molecule"></param>
+		void HideGasMolecule(GasMolecules::GasMolecule* molecule);
+
+		/// <summary>
+		/// Shows a hidden gas molecule
+		/// </summary>
+		/// <param name="molecule"></param>
+		void ShowGasMolecule(GasMolecules::GasMolecule* molecule);
+
 	private:
 		GasMolecules::GasMolecule m_startEndMolecules[PhysicsConfiguration::SpaceGridMoleculesWidth + 2][PhysicsConfiguration::SpaceGridMoleculesHeight + 2][2];
 

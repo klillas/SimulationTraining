@@ -79,7 +79,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\Include\Vulkan\Include;$(SolutionDir)\..\Include\GLM;$(SolutionDir)\..\Include\GLFW\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\Include\Vulkan\Include;$(SolutionDir)\..\Include\GLM;$(SolutionDir)\..\Include\GLFW\include;$(ProjectDir)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <Optimization>Disabled</Optimization>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -88,14 +88,14 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\..\Include\GLFW\lib-vc2022;$(SolutionDir)\..\Include\VULKAN\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\Include\GLFW\include\GLFW;$(SolutionDir)\..\Include\GLFW\lib-vc2022;$(SolutionDir)\..\Include\VULKAN\Lib;$(SolutionDir)\..\Include\glm\glm</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>if not exist "$(OutDir)\shaders\" mkdir "$(OutDir)\shaders\"
 
-D:\development\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.vert -o $(OutDir)\shaders\vert.spv
-D:\development\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(OutDir)\shaders\frag.spv</Command>
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.vert -o $(OutDir)\shaders\vert.spv
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(OutDir)\shaders\frag.spv</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -106,7 +106,7 @@ D:\development\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(Ou
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\Include\Vulkan\Include;$(SolutionDir)\..\Include\GLM;$(SolutionDir)\..\Include\GLFW\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\Include\Vulkan\Include;$(SolutionDir)\..\Include\GLM;$(SolutionDir)\..\Include\GLFW\include;$(ProjectDir)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -114,14 +114,14 @@ D:\development\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(Ou
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\..\Include\GLFW\lib-vc2022;$(SolutionDir)\..\Include\VULKAN\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\Include\GLFW\include\GLFW;$(SolutionDir)\..\Include\GLFW\lib-vc2022;$(SolutionDir)\..\Include\VULKAN\Lib;$(SolutionDir)\..\Include\glm\glm</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>if not exist "$(OutDir)\shaders\" mkdir "$(OutDir)\shaders\"
 
-D:\development\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.vert -o $(OutDir)\shaders\vert.spv
-D:\development\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(OutDir)\shaders\frag.spv</Command>
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.vert -o $(OutDir)\shaders\vert.spv
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(OutDir)\shaders\frag.spv</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -130,7 +130,7 @@ D:\development\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(Ou
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\Include\Vulkan\Include;$(SolutionDir)\..\Include\GLM;$(SolutionDir)\..\Include\GLFW\include;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\Include\Vulkan\Include;$(SolutionDir)\..\Include\GLM;$(SolutionDir)\..\Include\GLFW\include;$(ProjectDir)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <Optimization>Disabled</Optimization>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -139,7 +139,7 @@ D:\development\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(Ou
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\..\Include\GLFW\include\GLFW;$(SolutionDir)\..\Include\GLFW\lib-vc2022;$(SolutionDir)\..\Include\VULKAN\Lib;$(SolutionDir)\..\Include\glm\glm;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\Include\GLFW\include\GLFW;$(SolutionDir)\..\Include\GLFW\lib-vc2022;$(SolutionDir)\..\Include\VULKAN\Lib;$(SolutionDir)\..\Include\glm\glm</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
@@ -157,7 +157,7 @@ $(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\Include\Vulkan\Include;$(SolutionDir)\..\Include\GLM;$(SolutionDir)\..\Include\GLFW\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\Include\Vulkan\Include;$(SolutionDir)\..\Include\GLM;$(SolutionDir)\..\Include\GLFW\include;$(ProjectDir)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -165,14 +165,14 @@ $(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\..\Include\GLFW\lib-vc2022;$(SolutionDir)\..\Include\VULKAN\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\Include\GLFW\include\GLFW;$(SolutionDir)\..\Include\GLFW\lib-vc2022;$(SolutionDir)\..\Include\VULKAN\Lib;$(SolutionDir)\..\Include\glm\glm</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>if not exist "$(OutDir)\shaders\" mkdir "$(OutDir)\shaders\"
 
-D:\development\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.vert -o $(OutDir)\shaders\vert.spv
-D:\development\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(OutDir)\shaders\frag.spv</Command>
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.vert -o $(OutDir)\shaders\vert.spv
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(OutDir)\shaders\frag.spv</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

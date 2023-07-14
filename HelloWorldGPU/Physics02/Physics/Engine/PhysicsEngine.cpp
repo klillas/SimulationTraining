@@ -2,6 +2,7 @@
 #include "./Physics/PhysicsConfiguration.h"
 #include "Debug/DebugOutput.h"
 #include "Physics/RigidObjects/GasMolecules.h"
+#include <cmath>
 
 using namespace Physics::Engine;
 
@@ -23,17 +24,21 @@ unsigned PhysicsEngine::GasMoleculeCount()
 	return m_gasMolecules.size();
 }
 
-void PhysicsEngine::PhysicsTick(float timeDelta)
+void PhysicsEngine::PhysicsTick(float timeDelta, unsigned subticks)
 {
-	// Move objects according to their velocities
-	for (unsigned i = 0; i < m_gasMolecules.size(); i++)
+	timeDelta = timeDelta / subticks;
+	for (unsigned i = 0; i < subticks; i++)
 	{
-		GasMolecules::PhysicsTick(timeDelta, m_gasMolecules[i]);
-	}
+		// Move objects according to their velocities
+		for (unsigned i = 0; i < m_gasMolecules.size(); i++)
+		{
+			GasMolecules::PhysicsTick(timeDelta, m_gasMolecules[i]);
+		}
 
-	ResolveMoleculeCollisions(timeDelta);
-	ResolveWallCollisions(timeDelta);
-	UpdateMoleculeCellPositions();
+		ResolveMoleculeCollisions(timeDelta);
+		ResolveWallCollisions(timeDelta);
+		UpdateMoleculeCellPositions();
+	}
 }
 
 void PhysicsEngine::ResolveMoleculeCollisions(float timeDelta)
@@ -46,12 +51,11 @@ void PhysicsEngine::ResolveMoleculeCollisions(float timeDelta)
 			unsigned moleculeCount = cell->MoleculeCount;
 			// The first molecule is just an empty start molecule, we can safely skip any calculation on that
 			GasMolecules::GasMolecule* molecule = cell->StartMolecule;
-			for (unsigned moleculeID = 1; moleculeID < moleculeCount; moleculeID++)
+			for (unsigned moleculeID = 0; moleculeID < moleculeCount; moleculeID++)
 			{
 				molecule = molecule->nextItem;
 				// Temporarily remove molecule from cell, saves us an if check when going through all molecules in cell
-				molecule->previousItem->nextItem = molecule->nextItem;
-				molecule->nextItem->previousItem = molecule->previousItem;
+				//m_grid.HideGasMolecule(molecule);
 
 				// Check collisions with molecules in this cell, and all connected cells
 				// Assume that cell size is at least as large as the radius+radius of the two molecules
@@ -67,19 +71,17 @@ void PhysicsEngine::ResolveMoleculeCollisions(float timeDelta)
 				ResolveMoleculeCollisions(molecule, m_grid.GetCell(xIndex + 1, yIndex + 1));
 
 				// Place molecule back into the cell
-				molecule->previousItem->nextItem = molecule;
-				molecule->nextItem->previousItem = molecule;
+				//m_grid.ShowGasMolecule(molecule);
 			}
 		}
 	}
-	
-	// TODO: Implement boundary cell checking
 }
 
 void PhysicsEngine::ResolveMoleculeCollisions(GasMolecules::GasMolecule* molecule, SpaceGridMolecules::Cell* cell)
 {
 	const float epsilon = 0.001f;
 	const float moleculeRadius = PhysicsConfiguration::GasMoleculeDiameter / 2.0f;
+	const float moleculesRadii = moleculeRadius * 2;
 	const float moleculeMass = PhysicsConfiguration::GasMoleculeMass;
 
 	GasMolecules::GasMolecule* moleculeTwo = cell->StartMolecule;
@@ -87,30 +89,28 @@ void PhysicsEngine::ResolveMoleculeCollisions(GasMolecules::GasMolecule* molecul
 	{
 		moleculeTwo = moleculeTwo->nextItem;
 
-		if (GasMolecules::Intersects(molecule, moleculeTwo))
+		if (molecule != moleculeTwo && GasMolecules::Intersects(molecule, moleculeTwo))
 		{
-			// Calculate the relative velocity
+			// Move the molecules so they do not intersect anymore
+			glm::vec2 collisionVector = molecule->position - moleculeTwo->position;
+			glm::vec2 collisionNormalVector = glm::normalize(collisionVector);
+			float collisionLength = glm::length(collisionVector);
+			float intersectDepth = moleculesRadii - collisionLength;
+			glm::vec2 moveDeltaVector = collisionNormalVector * intersectDepth;
+			glm::vec2 moveDeltaHalfVector = moveDeltaVector / 2.0f;
+			molecule->position += moveDeltaHalfVector;
+			moleculeTwo->position -= moveDeltaHalfVector;
+
+			// Calculate the collision velocity transfer
 			glm::vec2 relativeVelocity = moleculeTwo->velocity - molecule->velocity;
+			glm::vec2 collisionTangentVector(collisionVector.y, -collisionVector.x);
+			glm::vec2 collisionTangentNormalVector = glm::normalize(collisionTangentVector);
+			float velocityLength = glm::dot(relativeVelocity, collisionTangentNormalVector);
+			glm::vec2 velocityOnTangent = collisionTangentNormalVector * velocityLength;
+			glm::vec2 velocityPerpendicularToTangent = relativeVelocity - velocityOnTangent;
 
-			// Calculate the distance between the centers of the circles
-			glm::vec2 displacement = moleculeTwo->position - molecule->position;
-			float distance = glm::length(displacement);
-
-			// Calculate the unit normal and tangential vectors
-			glm::vec2 normal = displacement / distance;
-			glm::vec2 tangential(-normal.y, normal.x);
-
-			// Exchange the relativy velocity between the two molecules
-			float velocityMagnitude = glm::dot(relativeVelocity, normal);
-			glm::vec2 velocityAdjustment = velocityMagnitude * normal;
-			molecule->velocity += velocityAdjustment;
-			moleculeTwo->velocity -= velocityAdjustment;
-
-			// Separate the circles to avoid overlapping
-			float overlap = (moleculeRadius + moleculeRadius) - distance;
-			glm::vec2 separation = (overlap * normal * 0.5f) + epsilon;
-			molecule->position -= separation;
-			moleculeTwo->position += separation;
+			molecule->velocity += velocityPerpendicularToTangent;
+			moleculeTwo->velocity -= velocityPerpendicularToTangent;
 		}
 	}
 }
@@ -196,6 +196,7 @@ void PhysicsEngine::UpdateMoleculeCellPositions()
 std::vector<VulkanInit::Vertex> PhysicsEngine::GetVertices()
 {
 	m_vertices.clear();
+
 	for (unsigned i = 0; i < m_gasMolecules.size(); i++)
 	{
 		GasMolecules::GetVertices(m_gasMolecules[i], &m_vertices);

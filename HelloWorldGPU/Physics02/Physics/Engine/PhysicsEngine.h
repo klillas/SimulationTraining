@@ -21,7 +21,7 @@ namespace Physics::Engine
 
 		unsigned GasMoleculeCount();
 
-		void PhysicsTick(float timeDelta);
+		void PhysicsTick(float timeDelta, unsigned subticks);
 
 		std::vector<VulkanInit::Vertex> GetVertices();
 

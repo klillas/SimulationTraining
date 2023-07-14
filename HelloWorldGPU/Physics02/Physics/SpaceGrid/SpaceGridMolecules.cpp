@@ -4,6 +4,9 @@ using namespace Physics::SpaceGrid;
 
 SpaceGridMolecules::SpaceGridMolecules()
 {
+	assert(CellWidth > PhysicsConfiguration::GasMoleculeDiameter);
+	assert(CellHeight > PhysicsConfiguration::GasMoleculeDiameter);
+
 	// Setup an empty start / end molecule for every cell
 	// This avoids a bunch of null checks later in the code
 	for (unsigned i = 0; i < PhysicsConfiguration::SpaceGridMoleculesWidth + 2; i++)
@@ -17,6 +20,47 @@ SpaceGridMolecules::SpaceGridMolecules()
 			m_cellGrid[i][j].StopMolecule = &m_startEndMolecules[i][j][1];
 		}
 	}
+}
+
+void SpaceGridMolecules::HideGasMolecule(GasMolecules::GasMolecule* molecule)
+{
+	Cell* cell = &m_cellGrid[molecule->cellIndexX + 1][molecule->cellIndexY + 1];
+	cell->MoleculeCount--;
+	molecule->previousItem->nextItem = molecule->nextItem;
+	molecule->nextItem->previousItem = molecule->previousItem;
+}
+
+void SpaceGridMolecules::ShowGasMolecule(GasMolecules::GasMolecule* molecule)
+{
+	Cell* cell = &m_cellGrid[molecule->cellIndexX + 1][molecule->cellIndexY + 1];
+	cell->MoleculeCount++;
+
+	GasMolecules::GasMolecule* previousMolecule = cell->StartMolecule;
+	GasMolecules::GasMolecule* nextMolecule = cell->StartMolecule->nextItem;
+	
+	previousMolecule->nextItem = molecule;
+	molecule->previousItem = previousMolecule;
+
+	molecule->nextItem = nextMolecule;
+	nextMolecule->previousItem = molecule;
+}
+
+void SpaceGridMolecules::RemoveGasMolecule(GasMolecules::GasMolecule* molecule)
+{
+	Cell* cell = &m_cellGrid[molecule->cellIndexX + 1][molecule->cellIndexY + 1];
+
+	// Remove the molecule from the cell by changing the molecule links of the previous and next molecule
+	molecule->previousItem->nextItem = molecule->nextItem;
+	molecule->nextItem->previousItem = molecule->previousItem;
+
+	// Decrease the amount of molecules in the cell
+	cell->MoleculeCount--;
+
+	// Reset any cell specific information in molecule
+	molecule->cellIndexX = 0;
+	molecule->cellIndexY = 0;
+	molecule->nextItem = nullptr;
+	molecule->previousItem = nullptr;
 }
 
 void SpaceGridMolecules::AddGasMolecule(GasMolecules::GasMolecule* newMolecule)

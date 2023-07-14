@@ -92,7 +92,7 @@ void VulkanFrameRenderedCallback(unsigned frametime_ms)
 
 void VulkanFrameRenderStartCallback()
 {
-    engine->PhysicsTick(0.01f);
+    engine->PhysicsTick(0.005f, 1);
 }
 
 void VulkanGetVerticesCallback(std::vector<VulkanInit::Vertex>* verticesBuffer)
@@ -107,6 +107,20 @@ int main() {
     app.RegisterVulkanFrameRenderedCallback(VulkanFrameRenderedCallback);
     app.RegisterVulkanFrameRenderStartCallback(VulkanFrameRenderStartCallback);
     app.RegisterVulkanGetVerticesCallback(VulkanGetVerticesCallback);
+
+#if RUN_TEST_ID == 2
+    GasMolecules::GasMolecule* gasMolecule = new GasMolecules::GasMolecule();
+    gasMolecule->position = glm::vec2(0.0f, 0.0f);
+    gasMolecule->color = glm::vec3(1.0f, 0.0f, 0.0f);
+    gasMolecule->velocity = glm::vec2(0.2f, 0.0f);
+    engine->AddGasMolecule(gasMolecule);
+
+    gasMolecule = new GasMolecules::GasMolecule();
+    gasMolecule->position = glm::vec2(PhysicsConfiguration::GasMoleculeDiameter * 1.3f, PhysicsConfiguration::GasMoleculeDiameter * 2.0f);
+    gasMolecule->color = glm::vec3(0.0f, 1.0f, 0.0f);
+    gasMolecule->velocity = glm::vec2(-0.0f, -1.0f);
+    engine->AddGasMolecule(gasMolecule);
+#endif
 
 #if RUN_TEST_ID == 1
     for (unsigned i = 0; i < Physics::PhysicsConfiguration::GasMoleculeStartCount; i++)
