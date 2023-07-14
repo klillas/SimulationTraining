@@ -34,3 +34,8 @@ Original implementation<br>
 Bug fixed (move out collision detection from molecule tick loop
 ![image](https://github.com/klillas/SimulationTraining/assets/7252976/f56e240b-3318-43c3-9610-263ed73eeda7)
 
+Optimization 4: Add space partitioning<br>
+Effect: About 15x increase in particles<br>
+Commit: https://github.com/klillas/SimulationTraining/commit/07669317ffaed287dab46d783e7516fa67a412c7
+![image](https://github.com/klillas/SimulationTraining/assets/7252976/94c8d9ee-e313-43bb-beab-656678b5c50e)
+![image](https://github.com/klillas/SimulationTraining/assets/7252976/2c81916d-b317-4480-b523-59837244cdf9)
