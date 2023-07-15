@@ -55,7 +55,7 @@ void PhysicsEngine::ResolveMoleculeCollisions(float timeDelta)
 			{
 				molecule = molecule->nextItem;
 				// Temporarily remove molecule from cell, saves us an if check when going through all molecules in cell
-				//m_grid.HideGasMolecule(molecule);
+				m_grid.HideGasMolecule(molecule);
 
 				// Check collisions with molecules in this cell, and all connected cells
 				// Assume that cell size is at least as large as the radius+radius of the two molecules
@@ -71,7 +71,7 @@ void PhysicsEngine::ResolveMoleculeCollisions(float timeDelta)
 				ResolveMoleculeCollisions(molecule, m_grid.GetCell(xIndex + 1, yIndex + 1));
 
 				// Place molecule back into the cell
-				//m_grid.ShowGasMolecule(molecule);
+				m_grid.ShowGasMolecule(molecule);
 			}
 		}
 	}
@@ -89,29 +89,45 @@ void PhysicsEngine::ResolveMoleculeCollisions(GasMolecules::GasMolecule* molecul
 	{
 		moleculeTwo = moleculeTwo->nextItem;
 
-		if (molecule != moleculeTwo && GasMolecules::Intersects(molecule, moleculeTwo))
-		{
-			// Move the molecules so they do not intersect anymore
-			glm::vec2 collisionVector = molecule->position - moleculeTwo->position;
-			glm::vec2 collisionNormalVector = glm::normalize(collisionVector);
-			float collisionLength = glm::length(collisionVector);
-			float intersectDepth = moleculesRadii - collisionLength;
-			glm::vec2 moveDeltaVector = collisionNormalVector * intersectDepth;
-			glm::vec2 moveDeltaHalfVector = moveDeltaVector / 2.0f;
-			molecule->position += moveDeltaHalfVector;
-			moleculeTwo->position -= moveDeltaHalfVector;
+		// Move the molecules so they do not intersect anymore
+		glm::vec2 collisionVector = molecule->position - moleculeTwo->position;
+		
+		//float collisionLength = glm::length(collisionVector);
+		float collisionLength = 1.0f / Q_rsqrt((collisionVector.x * collisionVector.x)+(collisionVector.y * collisionVector.y));;
 
-			// Calculate the collision velocity transfer
-			glm::vec2 relativeVelocity = moleculeTwo->velocity - molecule->velocity;
-			glm::vec2 collisionTangentVector(collisionVector.y, -collisionVector.x);
-			glm::vec2 collisionTangentNormalVector = glm::normalize(collisionTangentVector);
-			float velocityLength = glm::dot(relativeVelocity, collisionTangentNormalVector);
-			glm::vec2 velocityOnTangent = collisionTangentNormalVector * velocityLength;
-			glm::vec2 velocityPerpendicularToTangent = relativeVelocity - velocityOnTangent;
+		//glm::vec2 collisionNormalVector = glm::normalize(collisionVector);
+		glm::vec2 collisionNormalVector(collisionVector.x / collisionLength, collisionVector.y / collisionLength);
+		
+		float intersectDepth = moleculesRadii - collisionLength;
 
-			molecule->velocity += velocityPerpendicularToTangent;
-			moleculeTwo->velocity -= velocityPerpendicularToTangent;
-		}
+		// intersectDepth is set to 0 if it is negative (meaning molecules do not intersect)
+		float intersectDepthAbs = intersectDepth;
+		unsigned* farrPtr = (unsigned*) & intersectDepthAbs;
+		farrPtr[0] &= 0b01111111111111111111111111111111;
+		intersectDepth = (intersectDepth + intersectDepthAbs) / 2.0f;
+
+		glm::vec2 moveDeltaVector = collisionNormalVector * intersectDepth;
+		glm::vec2 moveDeltaHalfVector = moveDeltaVector / 2.0f;
+		molecule->position += moveDeltaHalfVector;
+		moleculeTwo->position -= moveDeltaHalfVector;
+			
+		// Calculate the collision velocity transfer
+		glm::vec2 relativeVelocity = (moleculeTwo->velocity - molecule->velocity);
+		relativeVelocity = relativeVelocity * intersectDepth / (intersectDepth + FLT_MIN);
+		glm::vec2 collisionTangentVector(collisionVector.y, -collisionVector.x);
+
+		//glm::vec2 collisionTangentNormalVector = glm::normalize(collisionTangentVector);
+		float collisionTangentVectorLength = 1.0f / Q_rsqrt((collisionTangentVector.x * collisionTangentVector.x) + (collisionTangentVector.y * collisionTangentVector.y));;
+		glm::vec2 collisionTangentNormalVector(collisionTangentVector.x / collisionTangentVectorLength, collisionTangentVector.y / collisionTangentVectorLength);
+
+		//float velocityMagnitude = glm::dot(relativeVelocity, collisionTangentNormalVector);
+		float velocityMagnitude = (relativeVelocity.x * collisionTangentNormalVector.x) + (relativeVelocity.y * collisionTangentNormalVector.y);
+
+		glm::vec2 velocityOnTangent = collisionTangentNormalVector * velocityMagnitude;
+		glm::vec2 velocityPerpendicularToTangent = relativeVelocity - velocityOnTangent;
+
+		molecule->velocity += velocityPerpendicularToTangent;
+		moleculeTwo->velocity -= velocityPerpendicularToTangent;
 	}
 }
 
@@ -174,19 +190,6 @@ void PhysicsEngine::ResolveWallCollisions(float timeDelta)
 
 void PhysicsEngine::UpdateMoleculeCellPositions()
 {
-	// Reset all cell contents
-	/*
-	for (unsigned xIndex = 0; xIndex < m_grid.CellCountX; xIndex++)
-	{
-		for (unsigned yIndex = 0; yIndex < m_grid.CellCountY; yIndex++)
-		{
-			m_grid.m_cellGrid[xIndex][yIndex].MoleculeCount = 0;
-			m_grid.m_cellGrid[xIndex][yIndex].StartMolecule->nextItem = m_grid.m_cellGrid[xIndex][yIndex].StopMolecule;
-			m_grid.m_cellGrid[xIndex][yIndex].StopMolecule->previousItem = m_grid.m_cellGrid[xIndex][yIndex].StartMolecule;
-		}
-	}
-	*/
-
 	for (unsigned i = 0; i < m_gasMolecules.size(); i++)
 	{
 		m_grid.UpdateMoleculeCellLocation(m_gasMolecules[i]);
@@ -204,3 +207,22 @@ std::vector<VulkanInit::Vertex> PhysicsEngine::GetVertices()
 
 	return m_vertices;
 }
+
+float PhysicsEngine::Q_rsqrt(float number)
+{
+	long i;
+	float x2, y;
+	const float threehalfs = 1.5F;
+
+	x2 = number * 0.5F;
+	y = number;
+	i = *(long*)&y;							// evil floating point bit level hacking
+	i = 0x5f3759df - (i >> 1);				// what the fuck?
+	y = *(float*)&i;
+	y = y * (threehalfs - (x2 * y * y));	// 1st iteration
+	//y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
+	y = y * 0.97f;	// Hack to move the error to the correct side
+
+	return y;
+}
+

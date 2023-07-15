@@ -30,6 +30,7 @@ namespace Physics::Engine
 		void ResolveMoleculeCollisions(float timeDelta);
 		void ResolveMoleculeCollisions(GasMolecules::GasMolecule* molecule, SpaceGridMolecules::Cell* cell);
 		void UpdateMoleculeCellPositions();
+		float Q_rsqrt(float number);
 
 	private:
 		std::vector<GasMolecules::GasMolecule*> m_gasMolecules;
