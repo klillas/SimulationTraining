@@ -98,9 +98,9 @@ void VulkanFrameRenderStartCallback()
 void VulkanGetVerticesCallback(std::vector<VulkanInit::Vertex>* verticesBuffer)
 {
     verticesBuffer->clear();
-    std::vector<VulkanInit::Vertex> newVerts = engine->GetVertices();
-    verticesBuffer->insert(verticesBuffer->end(), newVerts.begin(), newVerts.end());
+    engine->GetVertices(verticesBuffer);
 }
+
 
 int main() {
     VulkanInit app;

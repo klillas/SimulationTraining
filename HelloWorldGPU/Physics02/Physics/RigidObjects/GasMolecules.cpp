@@ -12,9 +12,9 @@ bool GasMolecules::Intersects(GasMolecule* moleculeOne, GasMolecule* moleculeTwo
 {
     static const float sumRadii = PhysicsConfiguration::GasMoleculeDiameter;
     static const float sumRadiiSquare = sumRadii * sumRadii;
-    static float dx = 0.0f;
-    static float dy = 0.0f;
-    static float squaredDistance = 0.0f;
+    float dx = 0.0f;
+    float dy = 0.0f;
+    float squaredDistance = 0.0f;
 
     // Calculate the distance between the centers of the circles
     // distance = sqrt((x2 - x1)^2 + (y2 - y1)^2)

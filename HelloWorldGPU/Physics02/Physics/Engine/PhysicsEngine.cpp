@@ -3,14 +3,55 @@
 #include "Debug/DebugOutput.h"
 #include "Physics/RigidObjects/GasMolecules.h"
 #include <cmath>
+#include <thread>
+#include <mutex>
+#include "PhysicsEngine_ThreadWorker.h"
+
+// TODO: Make multi-threading configurable via setting
+
+// TODO: Collisions are calculated on multiple threads on a column basis. Columns are added to work queues one by one. 
+//       The simulation is not deterministic because columns have race conditions on when they are calculated, and the 
+//       molecule states can be calculated in different order.
+//       A deterministic physics step calculation can be done if we calculate every x column first, wait until done, then calculate every x+1 column and so on.
 
 using namespace Physics::Engine;
+
+unsigned worksPending = 0;
+std::mutex workStatusMutex;
+std::condition_variable condition;
+
+void PhysicsEngine::PhysicsEngine_ThreadWorker_WorkDoneCallback()
+{
+	std::lock_guard<std::mutex> lock(workStatusMutex);
+	worksPending--;
+
+	if (worksPending == 0)
+	{
+		condition.notify_one();
+	}
+}
 
 PhysicsEngine::PhysicsEngine()
 	: m_gasMolecules({})
 	, m_vertices({})
+	, m_grid()
+	, m_worker1(new PhysicsEngine_ThreadWorker(this))
+	, m_worker2(new PhysicsEngine_ThreadWorker(this))
+	, m_worker3(new PhysicsEngine_ThreadWorker(this))
+	, m_worker4(new PhysicsEngine_ThreadWorker(this))
+	, m_worker5(new PhysicsEngine_ThreadWorker(this))
+	, m_worker6(new PhysicsEngine_ThreadWorker(this))
+	, m_worker7(new PhysicsEngine_ThreadWorker(this))
+	, m_worker8(new PhysicsEngine_ThreadWorker(this))
 {
-	
+	m_worker1->RegisterPhysicsEngine_ThreadWorker_WorkDoneCallback(PhysicsEngine_ThreadWorker_WorkDoneCallback);
+	m_worker2->RegisterPhysicsEngine_ThreadWorker_WorkDoneCallback(PhysicsEngine_ThreadWorker_WorkDoneCallback);
+	m_worker3->RegisterPhysicsEngine_ThreadWorker_WorkDoneCallback(PhysicsEngine_ThreadWorker_WorkDoneCallback);
+	m_worker4->RegisterPhysicsEngine_ThreadWorker_WorkDoneCallback(PhysicsEngine_ThreadWorker_WorkDoneCallback);
+	m_worker5->RegisterPhysicsEngine_ThreadWorker_WorkDoneCallback(PhysicsEngine_ThreadWorker_WorkDoneCallback);
+	m_worker6->RegisterPhysicsEngine_ThreadWorker_WorkDoneCallback(PhysicsEngine_ThreadWorker_WorkDoneCallback);
+	m_worker7->RegisterPhysicsEngine_ThreadWorker_WorkDoneCallback(PhysicsEngine_ThreadWorker_WorkDoneCallback);
+	m_worker8->RegisterPhysicsEngine_ThreadWorker_WorkDoneCallback(PhysicsEngine_ThreadWorker_WorkDoneCallback);
 }
 
 void PhysicsEngine::AddGasMolecule(GasMolecules::GasMolecule* rigidObject)
@@ -36,44 +77,77 @@ void PhysicsEngine::PhysicsTick(float timeDelta, unsigned subticks)
 		}
 
 		ResolveMoleculeCollisions(timeDelta);
+		std::unique_lock<std::mutex> lock(workStatusMutex);
+		condition.wait(lock);
+
 		ResolveWallCollisions(timeDelta);
 		UpdateMoleculeCellPositions();
 	}
 }
 
+void PhysicsEngine::ResolveMoleculeCollisions(unsigned xIndex, float timeDelta)
+{
+	for (unsigned yIndex = 0; yIndex < m_grid.CellCountY; yIndex++)
+	{
+		SpaceGridMolecules::Cell* cell = m_grid.GetCell(xIndex, yIndex);
+		unsigned moleculeCount = cell->MoleculeCount;
+		// The first molecule is just an empty start molecule, we can safely skip any calculation on that
+		GasMolecules::GasMolecule* molecule = cell->StartMolecule;
+		for (unsigned moleculeID = 0; moleculeID < moleculeCount; moleculeID++)
+		{
+			molecule = molecule->nextItem;
+			// Temporarily remove molecule from cell, saves us an if check when going through all molecules in cell
+			//m_grid.HideGasMolecule(molecule);
+
+			// Check collisions with molecules in this cell, and all connected cells
+			// Assume that cell size is at least as large as the radius+radius of the two molecules
+			// If molecule size becomes larger, we would need to check even more cells...
+			ResolveMoleculeCollisions(molecule, m_grid.GetCell(xIndex - 1, yIndex - 1));
+			ResolveMoleculeCollisions(molecule, m_grid.GetCell(xIndex + 0, yIndex - 1));
+			ResolveMoleculeCollisions(molecule, m_grid.GetCell(xIndex + 1, yIndex - 1));
+			ResolveMoleculeCollisions(molecule, m_grid.GetCell(xIndex - 1, yIndex + 0));
+			ResolveMoleculeCollisions(molecule, m_grid.GetCell(xIndex + 0, yIndex + 0));
+			ResolveMoleculeCollisions(molecule, m_grid.GetCell(xIndex + 1, yIndex + 0));
+			ResolveMoleculeCollisions(molecule, m_grid.GetCell(xIndex - 1, yIndex + 1));
+			ResolveMoleculeCollisions(molecule, m_grid.GetCell(xIndex + 0, yIndex + 1));
+			ResolveMoleculeCollisions(molecule, m_grid.GetCell(xIndex + 1, yIndex + 1));
+
+			// Place molecule back into the cell
+			//m_grid.ShowGasMolecule(molecule);
+		}
+	}
+}
+
+//static void TestMe();
+
 void PhysicsEngine::ResolveMoleculeCollisions(float timeDelta)
 {
-	for (unsigned xIndex = 0; xIndex < m_grid.CellCountX; xIndex++)
+	assert(m_grid.CellCountX % 8 == 0);
+	for (unsigned xIndex = 0; xIndex < m_grid.CellCountX; xIndex = xIndex + 8)
 	{
-		for (unsigned yIndex = 0; yIndex < m_grid.CellCountY; yIndex++)
 		{
-			SpaceGridMolecules::Cell* cell = m_grid.GetCell(xIndex, yIndex);
-			unsigned moleculeCount = cell->MoleculeCount;
-			// The first molecule is just an empty start molecule, we can safely skip any calculation on that
-			GasMolecules::GasMolecule* molecule = cell->StartMolecule;
-			for (unsigned moleculeID = 0; moleculeID < moleculeCount; moleculeID++)
-			{
-				molecule = molecule->nextItem;
-				// Temporarily remove molecule from cell, saves us an if check when going through all molecules in cell
-				//m_grid.HideGasMolecule(molecule);
-
-				// Check collisions with molecules in this cell, and all connected cells
-				// Assume that cell size is at least as large as the radius+radius of the two molecules
-				// If molecule size becomes larger, we would need to check even more cells...
-				ResolveMoleculeCollisions(molecule, m_grid.GetCell(xIndex - 1, yIndex - 1));
-				ResolveMoleculeCollisions(molecule, m_grid.GetCell(xIndex + 0, yIndex - 1));
-				ResolveMoleculeCollisions(molecule, m_grid.GetCell(xIndex + 1, yIndex - 1));
-				ResolveMoleculeCollisions(molecule, m_grid.GetCell(xIndex - 1, yIndex + 0));
-				ResolveMoleculeCollisions(molecule, m_grid.GetCell(xIndex + 0, yIndex + 0));
-				ResolveMoleculeCollisions(molecule, m_grid.GetCell(xIndex + 1, yIndex + 0));
-				ResolveMoleculeCollisions(molecule, m_grid.GetCell(xIndex - 1, yIndex + 1));
-				ResolveMoleculeCollisions(molecule, m_grid.GetCell(xIndex + 0, yIndex + 1));
-				ResolveMoleculeCollisions(molecule, m_grid.GetCell(xIndex + 1, yIndex + 1));
-
-				// Place molecule back into the cell
-				//m_grid.ShowGasMolecule(molecule);
-			}
+			std::lock_guard<std::mutex> lock(workStatusMutex);
+			worksPending = worksPending + 8;
 		}
+		m_worker1->AddWork(xIndex, timeDelta);
+		m_worker2->AddWork(xIndex + 1, timeDelta);
+		m_worker3->AddWork(xIndex + 2, timeDelta);
+		m_worker4->AddWork(xIndex + 3, timeDelta);
+		m_worker5->AddWork(xIndex + 4, timeDelta);
+		m_worker6->AddWork(xIndex + 5, timeDelta);
+		m_worker7->AddWork(xIndex + 6, timeDelta);
+		m_worker8->AddWork(xIndex + 7, timeDelta);
+
+		//threads.emplace_back([this, xIndex, timeDelta] { Thread_ResolveMoleculeCollisions(xIndex, timeDelta, this); });
+		//threads.emplace_back([this, xIndex, timeDelta] { Thread_ResolveMoleculeCollisions(xIndex + 1, timeDelta, this); });
+		//threads.emplace_back([this, xIndex, timeDelta] { Thread_ResolveMoleculeCollisions(xIndex + 2, timeDelta, this); });
+		//threads.emplace_back([this, xIndex, timeDelta] { Thread_ResolveMoleculeCollisions(xIndex + 3, timeDelta, this); });
+		//threads.emplace_back([this, xIndex, timeDelta] { Thread_ResolveMoleculeCollisions(xIndex + 4, timeDelta, this); });
+		//threads.emplace_back([this, xIndex, timeDelta] { Thread_ResolveMoleculeCollisions(xIndex + 5, timeDelta, this); });
+		//threads.emplace_back([this, xIndex, timeDelta] { Thread_ResolveMoleculeCollisions(xIndex + 6, timeDelta, this); });
+		//threads.emplace_back([this, xIndex, timeDelta] { Thread_ResolveMoleculeCollisions(xIndex + 7, timeDelta, this); });
+
+		// Wait for all threads to finish their work
 	}
 }
 
@@ -193,14 +267,12 @@ void PhysicsEngine::UpdateMoleculeCellPositions()
 	}
 }
 
-std::vector<VulkanInit::Vertex> PhysicsEngine::GetVertices()
+void PhysicsEngine::GetVertices(std::vector<VulkanInit::Vertex>* verticesBuffer)
 {
-	m_vertices.clear();
+	verticesBuffer->clear();
 
-	for (unsigned i = 0; i < m_gasMolecules.size(); i++)
+	for (unsigned i = 0; i < m_gasMolecules.size(); i = i + PhysicsConfiguration::PhysicsEngineFilterMoleculeFactor)
 	{
-		GasMolecules::GetVertices(m_gasMolecules[i], &m_vertices);
+		GasMolecules::GetVertices(m_gasMolecules[i], verticesBuffer);
 	}
-
-	return m_vertices;
 }

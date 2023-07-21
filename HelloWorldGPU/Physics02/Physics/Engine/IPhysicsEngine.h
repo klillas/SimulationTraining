@@ -15,7 +15,7 @@ namespace Physics::Engine
 
 		virtual void PhysicsTick(float timeDelta, unsigned subticks) = 0;
 
-		virtual std::vector<VulkanInit::Vertex> GetVertices() = 0;
+		virtual void GetVertices(std::vector<VulkanInit::Vertex>* verticesBuffer) = 0;
 	};
 };
 
