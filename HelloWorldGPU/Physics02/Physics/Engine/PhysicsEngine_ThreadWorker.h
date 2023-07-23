@@ -22,7 +22,6 @@ namespace Physics::Engine
 		struct ResolvePhysicsTickWork
 		{
 			float timeDelta;
-			unsigned subticks;
 			std::vector<GasMolecules::GasMolecule*> gasMolecules;
 			unsigned startIndex;
 			unsigned lastIndex;
@@ -32,7 +31,7 @@ namespace Physics::Engine
 
 		void AddResolveMoleculeCollisionWork(int xIndex, float timeDelta);
 
-		void AddResolvePhysicsTickWork(float timeDelta, unsigned subticks, std::vector<GasMolecules::GasMolecule*> gasMolecules, unsigned startIndex, unsigned lastIndex);
+		void AddResolvePhysicsTickWork(float timeDelta, std::vector<GasMolecules::GasMolecule*> gasMolecules, unsigned startIndex, unsigned lastIndex);
 
 		void RegisterPhysicsEngine_ThreadWorker_WorkDoneCallback(PhysicsEngine_ThreadWorker_WorkDoneCallback callback);
 

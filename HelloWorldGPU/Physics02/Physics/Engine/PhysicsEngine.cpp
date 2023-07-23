@@ -59,11 +59,18 @@ void PhysicsEngine::PhysicsTick(float timeDelta, unsigned subticks)
 	for (unsigned i = 0; i < subticks; i++)
 	{
 		// Move objects according to their velocities
-		CalculateMoleculesPhysicsTick(timeDelta, subticks);
+		for (unsigned i = 0; i < m_gasMolecules.size(); i++)
+		{
+			GasMolecules::PhysicsTick(timeDelta, m_gasMolecules[i]);
+		}
+		// Move objects according to their velocities
+		/*
+		CalculateMoleculesPhysicsTick(timeDelta);
 		{
 			std::unique_lock<std::mutex> lock(workStatusMutex);
 			condition.wait(lock);
 		}
+		*/
 
 		ResolveMoleculeCollisions(timeDelta);
 		{
@@ -76,7 +83,7 @@ void PhysicsEngine::PhysicsTick(float timeDelta, unsigned subticks)
 	}
 }
 
-void PhysicsEngine::CalculateMoleculesPhysicsTick(float timeDelta, unsigned subticks)
+void PhysicsEngine::CalculateMoleculesPhysicsTick(float timeDelta)
 {
 	unsigned moleculesPerWorker = m_gasMolecules.size() / PhysicsConfiguration::PhysicsEngineWorkerThreads;
 
@@ -94,7 +101,7 @@ void PhysicsEngine::CalculateMoleculesPhysicsTick(float timeDelta, unsigned subt
 			lastMolecule = m_gasMolecules.size() - 1;
 		}
 
-		m_workers[i]->AddResolvePhysicsTickWork(timeDelta, subticks, m_gasMolecules, startMolecule, lastMolecule);
+		m_workers[i]->AddResolvePhysicsTickWork(timeDelta, m_gasMolecules, startMolecule, lastMolecule);
 
 		startMolecule = lastMolecule + 1;
 		lastMolecule += moleculesPerWorker;

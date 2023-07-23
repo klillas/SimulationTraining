@@ -24,11 +24,10 @@ void PhysicsEngine_ThreadWorker::AddResolveMoleculeCollisionWork(int xIndex, flo
 	m_condition.notify_one();
 }
 
-void PhysicsEngine_ThreadWorker::AddResolvePhysicsTickWork(float timeDelta, unsigned subticks, std::vector<GasMolecules::GasMolecule*> gasMolecules, unsigned startIndex, unsigned lastIndex)
+void PhysicsEngine_ThreadWorker::AddResolvePhysicsTickWork(float timeDelta, std::vector<GasMolecules::GasMolecule*> gasMolecules, unsigned startIndex, unsigned lastIndex)
 {
 	ResolvePhysicsTickWork* work = new ResolvePhysicsTickWork();
 	work->timeDelta = timeDelta;
-	work->subticks = subticks;
 	work->gasMolecules = gasMolecules;
 	work->startIndex = startIndex;
 	work->lastIndex = lastIndex;
@@ -67,10 +66,7 @@ void PhysicsEngine_ThreadWorker::WorkerThreadFunction()
 			lock.unlock();
 			for (unsigned i = work->startIndex; i <= work->lastIndex; i++)
 			{
-				for (unsigned subticks = 0; subticks < work->subticks; subticks++)
-				{
-					GasMolecules::PhysicsTick(work->timeDelta, work->gasMolecules[i]);
-				}
+				GasMolecules::PhysicsTick(work->timeDelta, work->gasMolecules[i]);
 			}
 			lock.lock();
 

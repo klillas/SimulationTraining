@@ -38,7 +38,7 @@ namespace Physics::Engine
 		
 		void UpdateMoleculeCellPositions();
 
-		void CalculateMoleculesPhysicsTick(float timeDelta, unsigned subticks);
+		void CalculateMoleculesPhysicsTick(float timeDelta);
 
 	private:
 		std::vector<GasMolecules::GasMolecule*> m_gasMolecules;
