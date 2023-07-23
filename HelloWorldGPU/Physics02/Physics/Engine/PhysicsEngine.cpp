@@ -35,23 +35,11 @@ PhysicsEngine::PhysicsEngine()
 	: m_gasMolecules({})
 	, m_vertices({})
 	, m_grid()
-	, m_worker1(new PhysicsEngine_ThreadWorker(this))
-	, m_worker2(new PhysicsEngine_ThreadWorker(this))
-	, m_worker3(new PhysicsEngine_ThreadWorker(this))
-	, m_worker4(new PhysicsEngine_ThreadWorker(this))
-	, m_worker5(new PhysicsEngine_ThreadWorker(this))
-	, m_worker6(new PhysicsEngine_ThreadWorker(this))
-	, m_worker7(new PhysicsEngine_ThreadWorker(this))
-	, m_worker8(new PhysicsEngine_ThreadWorker(this))
 {
-	m_worker1->RegisterPhysicsEngine_ThreadWorker_WorkDoneCallback(PhysicsEngine_ThreadWorker_WorkDoneCallback);
-	m_worker2->RegisterPhysicsEngine_ThreadWorker_WorkDoneCallback(PhysicsEngine_ThreadWorker_WorkDoneCallback);
-	m_worker3->RegisterPhysicsEngine_ThreadWorker_WorkDoneCallback(PhysicsEngine_ThreadWorker_WorkDoneCallback);
-	m_worker4->RegisterPhysicsEngine_ThreadWorker_WorkDoneCallback(PhysicsEngine_ThreadWorker_WorkDoneCallback);
-	m_worker5->RegisterPhysicsEngine_ThreadWorker_WorkDoneCallback(PhysicsEngine_ThreadWorker_WorkDoneCallback);
-	m_worker6->RegisterPhysicsEngine_ThreadWorker_WorkDoneCallback(PhysicsEngine_ThreadWorker_WorkDoneCallback);
-	m_worker7->RegisterPhysicsEngine_ThreadWorker_WorkDoneCallback(PhysicsEngine_ThreadWorker_WorkDoneCallback);
-	m_worker8->RegisterPhysicsEngine_ThreadWorker_WorkDoneCallback(PhysicsEngine_ThreadWorker_WorkDoneCallback);
+	for (size_t i = 0; i < PhysicsConfiguration::PhysicsEngineWorkerThreads; ++i) {
+		m_workers[i] = new PhysicsEngine_ThreadWorker(this);
+		m_workers[i]->RegisterPhysicsEngine_ThreadWorker_WorkDoneCallback(PhysicsEngine_ThreadWorker_WorkDoneCallback);
+	}
 }
 
 void PhysicsEngine::AddGasMolecule(GasMolecules::GasMolecule* rigidObject)
@@ -71,17 +59,45 @@ void PhysicsEngine::PhysicsTick(float timeDelta, unsigned subticks)
 	for (unsigned i = 0; i < subticks; i++)
 	{
 		// Move objects according to their velocities
-		for (unsigned i = 0; i < m_gasMolecules.size(); i++)
+		CalculateMoleculesPhysicsTick(timeDelta, subticks);
 		{
-			GasMolecules::PhysicsTick(timeDelta, m_gasMolecules[i]);
+			std::unique_lock<std::mutex> lock(workStatusMutex);
+			condition.wait(lock);
 		}
 
 		ResolveMoleculeCollisions(timeDelta);
-		std::unique_lock<std::mutex> lock(workStatusMutex);
-		condition.wait(lock);
+		{
+			std::unique_lock<std::mutex> lock(workStatusMutex);
+			condition.wait(lock);
+		}
 
 		ResolveWallCollisions(timeDelta);
 		UpdateMoleculeCellPositions();
+	}
+}
+
+void PhysicsEngine::CalculateMoleculesPhysicsTick(float timeDelta, unsigned subticks)
+{
+	unsigned moleculesPerWorker = m_gasMolecules.size() / PhysicsConfiguration::PhysicsEngineWorkerThreads;
+
+	unsigned startMolecule = 0;
+	unsigned lastMolecule = moleculesPerWorker - 1;
+
+	{
+		std::lock_guard<std::mutex> lock(workStatusMutex);
+		worksPending = worksPending + PhysicsConfiguration::PhysicsEngineWorkerThreads;
+	}
+
+	for (size_t i = 0; i < PhysicsConfiguration::PhysicsEngineWorkerThreads; ++i) {
+		if (i == (PhysicsConfiguration::PhysicsEngineWorkerThreads - 1))
+		{
+			lastMolecule = m_gasMolecules.size() - 1;
+		}
+
+		m_workers[i]->AddResolvePhysicsTickWork(timeDelta, subticks, m_gasMolecules, startMolecule, lastMolecule);
+
+		startMolecule = lastMolecule + 1;
+		lastMolecule += moleculesPerWorker;
 	}
 }
 
@@ -122,32 +138,17 @@ void PhysicsEngine::ResolveMoleculeCollisions(unsigned xIndex, float timeDelta)
 
 void PhysicsEngine::ResolveMoleculeCollisions(float timeDelta)
 {
-	assert(m_grid.CellCountX % 8 == 0);
-	for (unsigned xIndex = 0; xIndex < m_grid.CellCountX; xIndex = xIndex + 8)
+	assert(m_grid.CellCountX % PhysicsConfiguration::PhysicsEngineWorkerThreads == 0);
+	for (unsigned xIndex = 0; xIndex < m_grid.CellCountX; xIndex = xIndex + PhysicsConfiguration::PhysicsEngineWorkerThreads)
 	{
 		{
 			std::lock_guard<std::mutex> lock(workStatusMutex);
-			worksPending = worksPending + 8;
+			worksPending = worksPending + PhysicsConfiguration::PhysicsEngineWorkerThreads;
 		}
-		m_worker1->AddWork(xIndex, timeDelta);
-		m_worker2->AddWork(xIndex + 1, timeDelta);
-		m_worker3->AddWork(xIndex + 2, timeDelta);
-		m_worker4->AddWork(xIndex + 3, timeDelta);
-		m_worker5->AddWork(xIndex + 4, timeDelta);
-		m_worker6->AddWork(xIndex + 5, timeDelta);
-		m_worker7->AddWork(xIndex + 6, timeDelta);
-		m_worker8->AddWork(xIndex + 7, timeDelta);
-
-		//threads.emplace_back([this, xIndex, timeDelta] { Thread_ResolveMoleculeCollisions(xIndex, timeDelta, this); });
-		//threads.emplace_back([this, xIndex, timeDelta] { Thread_ResolveMoleculeCollisions(xIndex + 1, timeDelta, this); });
-		//threads.emplace_back([this, xIndex, timeDelta] { Thread_ResolveMoleculeCollisions(xIndex + 2, timeDelta, this); });
-		//threads.emplace_back([this, xIndex, timeDelta] { Thread_ResolveMoleculeCollisions(xIndex + 3, timeDelta, this); });
-		//threads.emplace_back([this, xIndex, timeDelta] { Thread_ResolveMoleculeCollisions(xIndex + 4, timeDelta, this); });
-		//threads.emplace_back([this, xIndex, timeDelta] { Thread_ResolveMoleculeCollisions(xIndex + 5, timeDelta, this); });
-		//threads.emplace_back([this, xIndex, timeDelta] { Thread_ResolveMoleculeCollisions(xIndex + 6, timeDelta, this); });
-		//threads.emplace_back([this, xIndex, timeDelta] { Thread_ResolveMoleculeCollisions(xIndex + 7, timeDelta, this); });
-
-		// Wait for all threads to finish their work
+		
+		for (size_t i = 0; i < PhysicsConfiguration::PhysicsEngineWorkerThreads; ++i) {
+			m_workers[i]->AddResolveMoleculeCollisionWork(xIndex + i, timeDelta);
+		}
 	}
 }
 

@@ -19,9 +19,20 @@ namespace Physics::Engine
 			float timeDelta;
 		};
 
+		struct ResolvePhysicsTickWork
+		{
+			float timeDelta;
+			unsigned subticks;
+			std::vector<GasMolecules::GasMolecule*> gasMolecules;
+			unsigned startIndex;
+			unsigned lastIndex;
+		};
+
 		PhysicsEngine_ThreadWorker(PhysicsEngine* physicsEngine);
 
-		void AddWork(int xIndex, float timeDelta);
+		void AddResolveMoleculeCollisionWork(int xIndex, float timeDelta);
+
+		void AddResolvePhysicsTickWork(float timeDelta, unsigned subticks, std::vector<GasMolecules::GasMolecule*> gasMolecules, unsigned startIndex, unsigned lastIndex);
 
 		void RegisterPhysicsEngine_ThreadWorker_WorkDoneCallback(PhysicsEngine_ThreadWorker_WorkDoneCallback callback);
 
@@ -32,7 +43,9 @@ namespace Physics::Engine
 		std::thread m_thread;
 		std::mutex m_mutex;
 		std::condition_variable m_condition;
-		std::vector<const ResolveMoleculeCollisionWork*> m_work;
+		std::vector<const ResolveMoleculeCollisionWork*> m_ResolveMoleculeCollisionWork;
+		std::vector<const ResolvePhysicsTickWork*> m_ResolvePhysicsTickWork;
+
 		PhysicsEngine_ThreadWorker_WorkDoneCallback m_PhysicsEngine_ThreadWorker_WorkDoneCallback;
 	};
 };

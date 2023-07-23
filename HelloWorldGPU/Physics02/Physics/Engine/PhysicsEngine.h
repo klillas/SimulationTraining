@@ -38,18 +38,13 @@ namespace Physics::Engine
 		
 		void UpdateMoleculeCellPositions();
 
+		void CalculateMoleculesPhysicsTick(float timeDelta, unsigned subticks);
+
 	private:
 		std::vector<GasMolecules::GasMolecule*> m_gasMolecules;
 		std::vector<VulkanInit::Vertex> m_vertices;
 		SpaceGridMolecules m_grid;
-		PhysicsEngine_ThreadWorker *m_worker1;
-		PhysicsEngine_ThreadWorker* m_worker2;
-		PhysicsEngine_ThreadWorker* m_worker3;
-		PhysicsEngine_ThreadWorker* m_worker4;
-		PhysicsEngine_ThreadWorker* m_worker5;
-		PhysicsEngine_ThreadWorker* m_worker6;
-		PhysicsEngine_ThreadWorker* m_worker7;
-		PhysicsEngine_ThreadWorker* m_worker8;
+		PhysicsEngine_ThreadWorker* m_workers[PhysicsConfiguration::PhysicsEngineWorkerThreads];
 		static void PhysicsEngine_ThreadWorker_WorkDoneCallback();
 	};
 };

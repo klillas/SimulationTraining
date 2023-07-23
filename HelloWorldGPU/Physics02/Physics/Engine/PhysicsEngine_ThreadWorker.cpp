@@ -7,18 +7,34 @@ PhysicsEngine_ThreadWorker::PhysicsEngine_ThreadWorker(PhysicsEngine* physicsEng
 	, m_thread(std::thread(&PhysicsEngine_ThreadWorker::WorkerThreadFunction, this))
 	, m_mutex()
 	, m_condition()
-	, m_work()
+	, m_ResolveMoleculeCollisionWork()
+	, m_ResolvePhysicsTickWork()
 {
+
 }
 
-void PhysicsEngine_ThreadWorker::AddWork(int xIndex, float timeDelta)
+void PhysicsEngine_ThreadWorker::AddResolveMoleculeCollisionWork(int xIndex, float timeDelta)
 {
-	PhysicsEngine_ThreadWorker::ResolveMoleculeCollisionWork* work = new PhysicsEngine_ThreadWorker::ResolveMoleculeCollisionWork();
+	ResolveMoleculeCollisionWork* work = new ResolveMoleculeCollisionWork();
 	work->xIndex = xIndex;
 	work->timeDelta = timeDelta;
 
 	std::lock_guard<std::mutex> lock(m_mutex);
-	m_work.push_back(work);
+	m_ResolveMoleculeCollisionWork.push_back(work);
+	m_condition.notify_one();
+}
+
+void PhysicsEngine_ThreadWorker::AddResolvePhysicsTickWork(float timeDelta, unsigned subticks, std::vector<GasMolecules::GasMolecule*> gasMolecules, unsigned startIndex, unsigned lastIndex)
+{
+	ResolvePhysicsTickWork* work = new ResolvePhysicsTickWork();
+	work->timeDelta = timeDelta;
+	work->subticks = subticks;
+	work->gasMolecules = gasMolecules;
+	work->startIndex = startIndex;
+	work->lastIndex = lastIndex;
+
+	std::lock_guard<std::mutex> lock(m_mutex);
+	m_ResolvePhysicsTickWork.push_back(work);
 	m_condition.notify_one();
 }
 
@@ -28,12 +44,34 @@ void PhysicsEngine_ThreadWorker::WorkerThreadFunction()
 		std::unique_lock<std::mutex> lock(m_mutex);
 		m_condition.wait(lock);
 
-		while (m_work.size() > 0)
+		while (m_ResolveMoleculeCollisionWork.size() > 0)
 		{
-			const ResolveMoleculeCollisionWork* work = m_work.back();
-			m_work.pop_back();
+			const ResolveMoleculeCollisionWork* work = m_ResolveMoleculeCollisionWork.back();
+			m_ResolveMoleculeCollisionWork.pop_back();
 			lock.unlock();
 			m_physicsEngine->ResolveMoleculeCollisions(work->xIndex, work->timeDelta);
+			lock.lock();
+
+			delete work;
+
+			if (m_PhysicsEngine_ThreadWorker_WorkDoneCallback != nullptr)
+			{
+				m_PhysicsEngine_ThreadWorker_WorkDoneCallback();
+			}
+		}
+
+		while (m_ResolvePhysicsTickWork.size() > 0)
+		{
+			const ResolvePhysicsTickWork* work = m_ResolvePhysicsTickWork.back();
+			m_ResolvePhysicsTickWork.pop_back();
+			lock.unlock();
+			for (unsigned i = work->startIndex; i <= work->lastIndex; i++)
+			{
+				for (unsigned subticks = 0; subticks < work->subticks; subticks++)
+				{
+					GasMolecules::PhysicsTick(work->timeDelta, work->gasMolecules[i]);
+				}
+			}
 			lock.lock();
 
 			delete work;

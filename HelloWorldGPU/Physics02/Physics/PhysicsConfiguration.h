@@ -5,7 +5,7 @@ namespace Physics
 	class PhysicsConfiguration
 	{
 	public:
-		static inline const unsigned GasMoleculeStartCount = 226000;
+		static inline const unsigned GasMoleculeStartCount = 150000;
 		static inline const unsigned GasMoleculeMax = 1000000;
 
 		static inline const glm::vec2 PhysicsEngineBottomLeft = { -1.0f, 1.0f };
@@ -18,6 +18,7 @@ namespace Physics
 		/// </summary>
 		static inline const glm::vec2 PhysicsEngineStartPosNegativeDelta = { 1.0f, 1.0f };
 		static inline const unsigned PhysicsEngineFilterMoleculeFactor = 100;
+		static inline const unsigned PhysicsEngineWorkerThreads = 8;
 
 		static inline const float GasMoleculeDiameter = 0.003f;
 		static inline const float GasMoleculeMass = 0.01f;
