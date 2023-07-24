@@ -5,6 +5,7 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include "Physics/PhysicsConfiguration.h"
+#include <mutex>
 
 using namespace Physics::RigidObjects;
 using namespace Physics;
@@ -26,6 +27,7 @@ namespace Physics::SpaceGrid
 			GasMolecules::GasMolecule* StopMolecule = nullptr;
 			// Amount of molecules in this cell
 			unsigned MoleculeCount = 0;
+			std::mutex CellMutex;
 		};
 
 		SpaceGridMolecules();
@@ -61,6 +63,18 @@ namespace Physics::SpaceGrid
 		/// This will allow us to avoid a bunch of boundary check conditions inside the heavy duty update code
 		/// </summary>
 		Cell m_cellGrid[PhysicsConfiguration::SpaceGridMoleculesWidth + 2][PhysicsConfiguration::SpaceGridMoleculesHeight + 2];
+
+		/// <summary>
+		/// Can be used to perform a longer set of operations, like mutex locking two cells, without being afraid of race conditions between the two locks
+		/// 1. Lock this mutex
+		/// 2. Lock the first cell
+		/// 3. Lock the second cell
+		/// 4. Unlock this mutex
+		/// 5. Operate on the cells
+		/// 6. Unlock the first cell
+		/// 7. Unlock the second cell
+		/// </summary>
+		std::mutex m_atomicOperationMutex;
 	};
 };
 

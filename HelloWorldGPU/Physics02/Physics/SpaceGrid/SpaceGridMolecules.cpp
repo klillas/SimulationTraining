@@ -89,16 +89,30 @@ void SpaceGridMolecules::UpdateMoleculeCellLocation(GasMolecules::GasMolecule* m
 	unsigned xCellIndex = ((molecule->position.x + PhysicsConfiguration::PhysicsEngineStartPosNegativeDelta.x) / CellWidth);
 	unsigned yCellIndex = ((molecule->position.y + PhysicsConfiguration::PhysicsEngineStartPosNegativeDelta.y) / CellHeight);
 
+	if (molecule->cellIndexX == xCellIndex && molecule->cellIndexY == yCellIndex)
+	{
+		// Molecule has not changed cell, no update necessary
+		return;
+	}
+	
+	Cell& oldCell = m_cellGrid[molecule->cellIndexX + 1][molecule->cellIndexY + 1];
+	Cell& newCell = m_cellGrid[xCellIndex + 1][yCellIndex + 1];
+
+	//std::unique_lock<std::mutex> classLock(m_atomicOperationMutex);
+	//std::lock_guard<std::mutex> oldCellLock(oldCell.CellMutex);
+	//std::lock_guard<std::mutex> newCellLock(newCell.CellMutex);
+	//classLock.unlock();
+
 	// Remove molecule from the current cell
 	GasMolecules::GasMolecule* prevMolecule = molecule->previousItem;
 	GasMolecules::GasMolecule* nextMolecule = molecule->nextItem;
 	prevMolecule->nextItem = nextMolecule;
 	nextMolecule->previousItem = prevMolecule;
 	// Reduce molecule count in current cell by one
-	m_cellGrid[molecule->cellIndexX + 1][molecule->cellIndexY + 1].MoleculeCount--;
+	oldCell.MoleculeCount--;
 
 	// Add molecule to the new cell (it can be the same cell, cheaper to reassign than to run if checks)
-	GasMolecules::GasMolecule* startMolecule = m_cellGrid[xCellIndex + 1][yCellIndex + 1].StartMolecule;
+	GasMolecules::GasMolecule* startMolecule = newCell.StartMolecule;
 	nextMolecule = startMolecule->nextItem;
 
 	startMolecule->nextItem = molecule;
@@ -108,7 +122,7 @@ void SpaceGridMolecules::UpdateMoleculeCellLocation(GasMolecules::GasMolecule* m
 	//Update cell index in molecule and add one to the cell count
 	molecule->cellIndexX = xCellIndex;
 	molecule->cellIndexY = yCellIndex;
-	m_cellGrid[xCellIndex + 1][yCellIndex + 1].MoleculeCount++;
+	newCell.MoleculeCount++;
 }
 
 SpaceGridMolecules::Cell* SpaceGridMolecules::GetCell(unsigned indexX, unsigned indexY)
