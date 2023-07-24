@@ -17,7 +17,7 @@ namespace Physics
 		/// for calculations where we want to offset and calculate with only >= 0 coordinates
 		/// </summary>
 		static inline const glm::vec2 PhysicsEngineStartPosNegativeDelta = { 1.0f, 1.0f };
-		static inline const unsigned PhysicsEngineFilterMoleculeFactor = 1;
+		static inline const unsigned PhysicsEngineFilterMoleculeFactor = 100;
 		static inline const unsigned PhysicsEngineWorkerThreads = 8;
 		/// <summary>
 		/// The width of cell columns which divide parallel thread work
