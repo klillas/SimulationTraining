@@ -5,6 +5,8 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include "Physics/PhysicsConfiguration.h"
+#include <mutex>
+#include <tbb/concurrent_vector.h>
 
 using namespace Physics::RigidObjects;
 using namespace Physics;
@@ -21,40 +23,22 @@ namespace Physics::SpaceGrid
 
 		struct Cell
 		{
-		public:
-			GasMolecules::GasMolecule* StartMolecule = nullptr;
-			GasMolecules::GasMolecule* StopMolecule = nullptr;
-			// Amount of molecules in this cell
-			unsigned MoleculeCount = 0;
+			tbb::concurrent_vector<unsigned> MoleculeIDs;
 		};
 
 		SpaceGridMolecules();
 
-		void AddGasMolecule(GasMolecules::GasMolecule* newMolecule);
+		void AddGasMolecule(GasMolecules::GasMolecule* newMolecule, unsigned moleculeID);
 
 		void UpdateGasMoleculeCells();
 
-		void UpdateMoleculeCellLocation(GasMolecules::GasMolecule* molecule);
+		void UpdateMoleculesCellLocation(std::vector<GasMolecules::GasMolecule*>& molecules);
 
 		Cell* GetCell(unsigned indexX, unsigned indexY);
 
-		void RemoveGasMolecule(GasMolecules::GasMolecule* molecule);
-
-		/// <summary>
-		/// Temporarily hides a gas molecule in a cell. Can be shown again in the cell with ShowGasMolecule
-		/// </summary>
-		/// <param name="molecule"></param>
-		void HideGasMolecule(GasMolecules::GasMolecule* molecule);
-
-		/// <summary>
-		/// Shows a hidden gas molecule
-		/// </summary>
-		/// <param name="molecule"></param>
-		void ShowGasMolecule(GasMolecules::GasMolecule* molecule);
+		void RemoveGasMolecule(GasMolecules::GasMolecule* molecule, unsigned moleculeID);
 
 	private:
-		GasMolecules::GasMolecule m_startEndMolecules[PhysicsConfiguration::SpaceGridMoleculesWidth + 2][PhysicsConfiguration::SpaceGridMoleculesHeight + 2][2];
-
 		/// <summary>
 		/// Cell grid containing all the cells for the space partitioning
 		/// There is an additional cell on the top, bottom, left and right side which will always be empty (outside the bounds of the simulation)

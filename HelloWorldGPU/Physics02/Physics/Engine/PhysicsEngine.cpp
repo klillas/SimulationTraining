@@ -45,7 +45,7 @@ PhysicsEngine::PhysicsEngine()
 void PhysicsEngine::AddGasMolecule(GasMolecules::GasMolecule* rigidObject)
 {
 	m_gasMolecules.push_back(rigidObject);
-	m_grid.AddGasMolecule(rigidObject);
+	m_grid.AddGasMolecule(rigidObject, m_gasMolecules.size() - 1);
 }
 
 unsigned PhysicsEngine::GasMoleculeCount()
@@ -113,12 +113,11 @@ void PhysicsEngine::ResolveMoleculeCollisions(unsigned xIndex, float timeDelta)
 	for (unsigned yIndex = 0; yIndex < m_grid.CellCountY; yIndex++)
 	{
 		SpaceGridMolecules::Cell* cell = m_grid.GetCell(xIndex, yIndex);
-		unsigned moleculeCount = cell->MoleculeCount;
-		// The first molecule is just an empty start molecule, we can safely skip any calculation on that
-		GasMolecules::GasMolecule* molecule = cell->StartMolecule;
-		for (unsigned moleculeID = 0; moleculeID < moleculeCount; moleculeID++)
+		unsigned moleculeCount = cell->MoleculeIDs.size();
+		GasMolecules::GasMolecule* molecule;
+		for (unsigned i = 0; i < moleculeCount; i++)
 		{
-			molecule = molecule->nextItem;
+			molecule = m_gasMolecules[cell->MoleculeIDs[i]];
 			// Temporarily remove molecule from cell, saves us an if check when going through all molecules in cell
 			//m_grid.HideGasMolecule(molecule);
 
@@ -166,10 +165,11 @@ void PhysicsEngine::ResolveMoleculeCollisions(GasMolecules::GasMolecule* molecul
 	const float moleculesRadii = moleculeRadius * 2;
 	const float moleculeMass = PhysicsConfiguration::GasMoleculeMass;
 
-	GasMolecules::GasMolecule* moleculeTwo = cell->StartMolecule;
-	for (unsigned cellPosition = 0; cellPosition < cell->MoleculeCount; cellPosition++)
+	GasMolecules::GasMolecule* moleculeTwo;
+	unsigned moleculeCount = cell->MoleculeIDs.size();
+	for (unsigned i = 0; i < moleculeCount; i++)
 	{
-		moleculeTwo = moleculeTwo->nextItem;
+		moleculeTwo = m_gasMolecules[cell->MoleculeIDs[i]];
 
 		if (molecule != moleculeTwo && GasMolecules::Intersects(molecule, moleculeTwo))
 		{
@@ -256,23 +256,7 @@ void PhysicsEngine::ResolveWallCollisions(float timeDelta)
 
 void PhysicsEngine::UpdateMoleculeCellPositions()
 {
-	// Reset all cell contents
-	/*
-	for (unsigned xIndex = 0; xIndex < m_grid.CellCountX; xIndex++)
-	{
-		for (unsigned yIndex = 0; yIndex < m_grid.CellCountY; yIndex++)
-		{
-			m_grid.m_cellGrid[xIndex][yIndex].MoleculeCount = 0;
-			m_grid.m_cellGrid[xIndex][yIndex].StartMolecule->nextItem = m_grid.m_cellGrid[xIndex][yIndex].StopMolecule;
-			m_grid.m_cellGrid[xIndex][yIndex].StopMolecule->previousItem = m_grid.m_cellGrid[xIndex][yIndex].StartMolecule;
-		}
-	}
-	*/
-
-	for (unsigned i = 0; i < m_gasMolecules.size(); i++)
-	{
-		m_grid.UpdateMoleculeCellLocation(m_gasMolecules[i]);
-	}
+	m_grid.UpdateMoleculesCellLocation(m_gasMolecules);
 }
 
 void PhysicsEngine::GetVertices(std::vector<VulkanInit::Vertex>* verticesBuffer)
