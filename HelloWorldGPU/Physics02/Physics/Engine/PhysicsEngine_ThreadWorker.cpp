@@ -2,8 +2,9 @@
 
 using namespace Physics::Engine;
 
-PhysicsEngine_ThreadWorker::PhysicsEngine_ThreadWorker(PhysicsEngine* physicsEngine)
+PhysicsEngine_ThreadWorker::PhysicsEngine_ThreadWorker(PhysicsEngine* physicsEngine, SpaceGridMolecules* spaceGridMolecules)
 	: m_physicsEngine(physicsEngine)
+	, m_spaceGridMolecules(spaceGridMolecules)
 	, m_thread(std::thread(&PhysicsEngine_ThreadWorker::WorkerThreadFunction, this))
 	, m_mutex()
 	, m_condition()
@@ -34,6 +35,38 @@ void PhysicsEngine_ThreadWorker::AddResolvePhysicsTickWork(float timeDelta, std:
 
 	std::lock_guard<std::mutex> lock(m_mutex);
 	m_ResolvePhysicsTickWork.push_back(work);
+	m_condition.notify_one();
+}
+
+void PhysicsEngine_ThreadWorker::AddUpdateMoleculesCellLocation(std::vector<GasMolecules::GasMolecule*>& gasMolecules, unsigned startIndex, unsigned lastIndex)
+{
+	UpdateMoleculesCellLocationWork* work = new UpdateMoleculesCellLocationWork(gasMolecules, startIndex, lastIndex);
+
+	std::lock_guard<std::mutex> lock(m_mutex);
+	m_UpdateMoleculesCellLocationWork.push_back(work);
+	m_condition.notify_one();
+}
+
+void PhysicsEngine_ThreadWorker::AddResetMoleculeCellLocationskWork(unsigned startIndex, unsigned lastIndex)
+{
+	ResetMoleculeCellLocationskWork* work = new ResetMoleculeCellLocationskWork();
+	work->lastIndex = lastIndex;
+	work->startIndex = startIndex;
+
+	std::lock_guard<std::mutex> lock(m_mutex);
+	m_ResetMoleculeCellLocationskWork.push_back(work);
+	m_condition.notify_one();
+}
+
+void PhysicsEngine_ThreadWorker::AddResolveWallCollisionsWork(float timeDelta, unsigned moleculeIDStart, unsigned moleculeIDLast)
+{
+	ResolveWallCollisionsWork* work = new ResolveWallCollisionsWork();
+	work->timeDelta = timeDelta;
+	work->moleculeIDStart = moleculeIDStart;
+	work->moleculeIDLast = moleculeIDLast;
+
+	std::lock_guard<std::mutex> lock(m_mutex);
+	m_ResolveWallCollisionsWork.push_back(work);
 	m_condition.notify_one();
 }
 
@@ -68,6 +101,54 @@ void PhysicsEngine_ThreadWorker::WorkerThreadFunction()
 			{
 				GasMolecules::PhysicsTick(work->timeDelta, work->gasMolecules[i]);
 			}
+			lock.lock();
+
+			delete work;
+
+			if (m_PhysicsEngine_ThreadWorker_WorkDoneCallback != nullptr)
+			{
+				m_PhysicsEngine_ThreadWorker_WorkDoneCallback();
+			}
+		}
+
+		while (m_UpdateMoleculesCellLocationWork.size() > 0)
+		{
+			const UpdateMoleculesCellLocationWork* work = m_UpdateMoleculesCellLocationWork.back();
+			m_UpdateMoleculesCellLocationWork.pop_back();
+			lock.unlock();
+			m_spaceGridMolecules->UpdateMoleculesCellLocation(work->gasMolecules, work->startColumnIndex, work->lastColumnIndex);
+			lock.lock();
+
+			delete work;
+
+			if (m_PhysicsEngine_ThreadWorker_WorkDoneCallback != nullptr)
+			{
+				m_PhysicsEngine_ThreadWorker_WorkDoneCallback();
+			}
+		}
+
+		while (m_ResetMoleculeCellLocationskWork.size() > 0)
+		{
+			const ResetMoleculeCellLocationskWork* work = m_ResetMoleculeCellLocationskWork.back();
+			m_ResetMoleculeCellLocationskWork.pop_back();
+			lock.unlock();
+			m_spaceGridMolecules->ResetMoleculeCellLocations(work->startIndex, work->lastIndex);
+			lock.lock();
+
+			delete work;
+
+			if (m_PhysicsEngine_ThreadWorker_WorkDoneCallback != nullptr)
+			{
+				m_PhysicsEngine_ThreadWorker_WorkDoneCallback();
+			}
+		}
+
+		while (m_ResolveWallCollisionsWork.size() > 0)
+		{
+			const ResolveWallCollisionsWork* work = m_ResolveWallCollisionsWork.back();
+			m_ResolveWallCollisionsWork.pop_back();
+			lock.unlock();
+			m_physicsEngine->ResolveWallCollisions(work->timeDelta, work->moleculeIDStart, work->moleculeIDLast);
 			lock.lock();
 
 			delete work;

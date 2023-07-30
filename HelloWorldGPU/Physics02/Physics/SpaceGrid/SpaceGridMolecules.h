@@ -16,10 +16,10 @@ namespace Physics::SpaceGrid
 	class SpaceGridMolecules
 	{
 	public:
-		const unsigned CellCountX = PhysicsConfiguration::SpaceGridMoleculesWidth;
-		const unsigned CellCountY = PhysicsConfiguration::SpaceGridMoleculesHeight;
-		const float CellWidth = PhysicsConfiguration::PhysicsEngineWidth / PhysicsConfiguration::SpaceGridMoleculesWidth;
-		const float CellHeight = PhysicsConfiguration::PhysicsEngineHeight / PhysicsConfiguration::SpaceGridMoleculesHeight;
+		const unsigned CellCountX = PhysicsConfiguration::SpaceGridCellMoleculesWidth;
+		const unsigned CellCountY = PhysicsConfiguration::SpaceGridCellMoleculesHeight;
+		const float CellWidth = PhysicsConfiguration::PhysicsEngineWidth / PhysicsConfiguration::SpaceGridCellMoleculesWidth;
+		const float CellHeight = PhysicsConfiguration::PhysicsEngineHeight / PhysicsConfiguration::SpaceGridCellMoleculesHeight;
 
 		struct Cell
 		{
@@ -30,9 +30,19 @@ namespace Physics::SpaceGrid
 
 		void AddGasMolecule(GasMolecules::GasMolecule* newMolecule, unsigned moleculeID);
 
-		void UpdateGasMoleculeCells();
+		// Resets the list of cell molecule ID vectors in preparation to run UpdateMoleculesCellLocation
+		// Thread safe
+		void ResetMoleculeCellLocations(unsigned columnStartID, unsigned columnLastID);
 
-		void UpdateMoleculesCellLocation(std::vector<GasMolecules::GasMolecule*>& molecules);
+		/// <summary>
+		/// Updates molecule cell locations
+		/// ResetMoleculeCellLocations() must be called first
+		/// Thread safe
+		/// </summary>
+		/// <param name="molecules"></param>
+		/// <param name="startIndex"></param>
+		/// <param name="lastIndex"></param>
+		void UpdateMoleculesCellLocation(std::vector<GasMolecules::GasMolecule*>& molecules, unsigned startIndex, unsigned lastIndex);
 
 		Cell* GetCell(unsigned indexX, unsigned indexY);
 
@@ -44,7 +54,7 @@ namespace Physics::SpaceGrid
 		/// There is an additional cell on the top, bottom, left and right side which will always be empty (outside the bounds of the simulation)
 		/// This will allow us to avoid a bunch of boundary check conditions inside the heavy duty update code
 		/// </summary>
-		Cell m_cellGrid[PhysicsConfiguration::SpaceGridMoleculesWidth + 2][PhysicsConfiguration::SpaceGridMoleculesHeight + 2];
+		Cell m_cellGrid[PhysicsConfiguration::SpaceGridCellMoleculesWidth + 2][PhysicsConfiguration::SpaceGridCellMoleculesHeight + 2];
 	};
 };
 

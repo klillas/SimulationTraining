@@ -23,7 +23,7 @@ namespace Physics
 		static inline const float GasMoleculeDiameter = 0.003f;
 		static inline const float GasMoleculeMass = 0.01f;
 
-		static inline const unsigned SpaceGridMoleculesWidth = 400;
-		static inline const unsigned SpaceGridMoleculesHeight = 400;
+		static inline const unsigned SpaceGridCellMoleculesWidth = 400;
+		static inline const unsigned SpaceGridCellMoleculesHeight = 400;
 	};
 };

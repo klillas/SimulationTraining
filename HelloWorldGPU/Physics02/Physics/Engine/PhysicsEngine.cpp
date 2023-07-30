@@ -37,7 +37,7 @@ PhysicsEngine::PhysicsEngine()
 	, m_grid()
 {
 	for (size_t i = 0; i < PhysicsConfiguration::PhysicsEngineWorkerThreads; ++i) {
-		m_workers[i] = new PhysicsEngine_ThreadWorker(this);
+		m_workers[i] = new PhysicsEngine_ThreadWorker(this, &m_grid);
 		m_workers[i]->RegisterPhysicsEngine_ThreadWorker_WorkDoneCallback(PhysicsEngine_ThreadWorker_WorkDoneCallback);
 	}
 }
@@ -59,24 +59,17 @@ void PhysicsEngine::PhysicsTick(float timeDelta, unsigned subticks)
 	for (unsigned i = 0; i < subticks; i++)
 	{
 		// Move objects according to their velocities
+		
 		for (unsigned i = 0; i < m_gasMolecules.size(); i++)
 		{
 			GasMolecules::PhysicsTick(timeDelta, m_gasMolecules[i]);
 		}
+		
 		// Move objects according to their velocities
-		/*
-		CalculateMoleculesPhysicsTick(timeDelta);
-		{
-			std::unique_lock<std::mutex> lock(workStatusMutex);
-			condition.wait(lock);
-		}
-		*/
+		//CalculateMoleculesPhysicsTick(timeDelta);
+		
 
 		ResolveMoleculeCollisions(timeDelta);
-		{
-			std::unique_lock<std::mutex> lock(workStatusMutex);
-			condition.wait(lock);
-		}
 
 		ResolveWallCollisions(timeDelta);
 		UpdateMoleculeCellPositions();
@@ -105,6 +98,11 @@ void PhysicsEngine::CalculateMoleculesPhysicsTick(float timeDelta)
 
 		startMolecule = lastMolecule + 1;
 		lastMolecule += moleculesPerWorker;
+	}
+
+	{
+		std::unique_lock<std::mutex> lock(workStatusMutex);
+		condition.wait(lock);
 	}
 }
 
@@ -156,6 +154,11 @@ void PhysicsEngine::ResolveMoleculeCollisions(float timeDelta)
 			m_workers[i]->AddResolveMoleculeCollisionWork(xIndex + i, timeDelta);
 		}
 	}
+
+	{
+		std::unique_lock<std::mutex> lock(workStatusMutex);
+		condition.wait(lock);
+	}
 }
 
 void PhysicsEngine::ResolveMoleculeCollisions(GasMolecules::GasMolecule* molecule, SpaceGridMolecules::Cell* cell)
@@ -199,11 +202,41 @@ void PhysicsEngine::ResolveMoleculeCollisions(GasMolecules::GasMolecule* molecul
 
 void PhysicsEngine::ResolveWallCollisions(float timeDelta)
 {
+	unsigned moleculesPerWorker = m_gasMolecules.size() / PhysicsConfiguration::PhysicsEngineWorkerThreads;
+
+	unsigned startMolecule = 0;
+	unsigned lastMolecule = moleculesPerWorker - 1;
+
+	{
+		std::lock_guard<std::mutex> lock(workStatusMutex);
+		worksPending = worksPending + PhysicsConfiguration::PhysicsEngineWorkerThreads;
+	}
+
+	for (size_t i = 0; i < PhysicsConfiguration::PhysicsEngineWorkerThreads; ++i) {
+		if (i == (PhysicsConfiguration::PhysicsEngineWorkerThreads - 1))
+		{
+			lastMolecule = m_gasMolecules.size() - 1;
+		}
+
+		m_workers[i]->AddResolveWallCollisionsWork(timeDelta, startMolecule, lastMolecule);
+
+		startMolecule = lastMolecule + 1;
+		lastMolecule += moleculesPerWorker;
+	}
+
+	{
+		std::unique_lock<std::mutex> lock(workStatusMutex);
+		condition.wait(lock);
+	}
+}
+
+void PhysicsEngine::ResolveWallCollisions(float timeDelta, unsigned moleculeIDStart, unsigned moleculeIDLast)
+{
 	const float epsilon = 0.001f;
 	static const float moleculeRadius = PhysicsConfiguration::GasMoleculeDiameter / 2.0f;
 
 	// Resolve wall collisions
-	for (unsigned i = 0; i < m_gasMolecules.size(); i++)
+	for (unsigned i = moleculeIDStart; i <= moleculeIDLast; i++)
 	{
 		GasMolecules::GasMolecule* ro1 = m_gasMolecules[i];
 		// TODO: This dynamic casting to IShape all over the place needs to stop
@@ -256,7 +289,53 @@ void PhysicsEngine::ResolveWallCollisions(float timeDelta)
 
 void PhysicsEngine::UpdateMoleculeCellPositions()
 {
-	m_grid.UpdateMoleculesCellLocation(m_gasMolecules);
+	assert(m_grid.CellCountX % PhysicsConfiguration::PhysicsEngineWorkerThreads == 0);
+	{
+		std::lock_guard<std::mutex> lock(workStatusMutex);
+		worksPending = worksPending + PhysicsConfiguration::PhysicsEngineWorkerThreads;
+	}
+
+	unsigned columnsPerThread = m_grid.CellCountX / PhysicsConfiguration::PhysicsEngineWorkerThreads;
+	unsigned columnStart = 0;
+	unsigned columnLast = columnsPerThread;
+	for (unsigned i = 0; i < PhysicsConfiguration::PhysicsEngineWorkerThreads; ++i) {
+		if (i == (PhysicsConfiguration::PhysicsEngineWorkerThreads - 1))
+		{
+			// Last thread, make sure we include all columns
+			columnLast = m_grid.CellCountX - 1;
+		}
+		m_workers[i]->AddResetMoleculeCellLocationskWork(columnStart, columnLast);
+		columnStart = columnLast + 1;
+		columnLast += columnsPerThread;
+	}
+	{
+		std::unique_lock<std::mutex> lock(workStatusMutex);
+		condition.wait(lock);
+	}
+
+	assert(m_grid.CellCountX % PhysicsConfiguration::PhysicsEngineWorkerThreads == 0);
+	{
+		std::lock_guard<std::mutex> lock(workStatusMutex);
+		worksPending = worksPending + PhysicsConfiguration::PhysicsEngineWorkerThreads;
+	}
+	unsigned moleculesPerThread = m_gasMolecules.size() / PhysicsConfiguration::PhysicsEngineWorkerThreads;
+	unsigned moleculeStart = 0;
+	unsigned moleculeLast = moleculesPerThread;
+	for (unsigned i = 0; i < PhysicsConfiguration::PhysicsEngineWorkerThreads; ++i) {
+		if (i == (PhysicsConfiguration::PhysicsEngineWorkerThreads - 1))
+		{
+			// Last thread, make sure we include all columns
+			moleculeLast = m_gasMolecules.size() - 1;
+		}
+		m_workers[i]->AddUpdateMoleculesCellLocation(m_gasMolecules, moleculeStart, moleculeLast);
+		moleculeStart = moleculeLast + 1;
+		moleculeLast += moleculesPerThread;
+	}
+
+	{
+		std::unique_lock<std::mutex> lock(workStatusMutex);
+		condition.wait(lock);
+	}
 }
 
 void PhysicsEngine::GetVertices(std::vector<VulkanInit::Vertex>* verticesBuffer)

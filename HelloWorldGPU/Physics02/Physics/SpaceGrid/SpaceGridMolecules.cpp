@@ -49,18 +49,36 @@ void SpaceGridMolecules::AddGasMolecule(GasMolecules::GasMolecule* newMolecule, 
 	newMolecule->cellIndexY = yCellIndex;
 }
 
-void SpaceGridMolecules::UpdateMoleculesCellLocation(std::vector<GasMolecules::GasMolecule*>& molecules)
+void SpaceGridMolecules::ResetMoleculeCellLocations(unsigned columnStartID, unsigned columnLastID)
 {
-	// First reset all cells
-	for (unsigned widthIndex = 0; widthIndex < PhysicsConfiguration::SpaceGridMoleculesWidth + 2; widthIndex++)
+	// remember to offset any cell access by index by one because of the empty starting cells
+	if (columnLastID == PhysicsConfiguration::SpaceGridCellMoleculesWidth - 1)
 	{
-		for (unsigned heightIndex = 0; heightIndex < PhysicsConfiguration::SpaceGridMoleculesHeight + 2; heightIndex++)
+		// Add one to also erase the "hidden" last column
+		columnLastID += 1;
+	}
+	// Always add one to offset the "hidden" first column at index 0
+	columnLastID += 1;
+	
+	// Keep start index to 0 to clear also the "hidden" starting column if this work will clear the first real column
+	if (columnStartID != 0)
+	{
+		columnStartID += 1;
+	}
+
+	for (unsigned widthIndex = columnStartID; widthIndex <= columnLastID; widthIndex++)
+	{
+		for (unsigned heightIndex = 0; heightIndex < PhysicsConfiguration::SpaceGridCellMoleculesHeight + 2; heightIndex++)
 		{
 			m_cellGrid[widthIndex][heightIndex].MoleculeIDs.clear();
 		}
 	}
+}
 
-	for (unsigned moleculeID = 0; moleculeID < molecules.size(); moleculeID++)
+void SpaceGridMolecules::UpdateMoleculesCellLocation(std::vector<GasMolecules::GasMolecule*>& molecules, unsigned startIndex, unsigned lastIndex)
+{
+	// TODO: K.L. Implement worker thread startIndex, lastIndex
+	for (unsigned moleculeID = startIndex; moleculeID <= lastIndex; moleculeID++)
 	{
 		GasMolecules::GasMolecule* molecule = molecules[moleculeID];
 		// remember to offset any cell access by index by one because of the empty starting cells
@@ -68,34 +86,6 @@ void SpaceGridMolecules::UpdateMoleculesCellLocation(std::vector<GasMolecules::G
 		molecule->cellIndexY = ((molecule->position.y + PhysicsConfiguration::PhysicsEngineStartPosNegativeDelta.y) / CellHeight);
 		m_cellGrid[molecule->cellIndexX + 1][molecule->cellIndexY + 1].MoleculeIDs.push_back(moleculeID);
 	}
-
-
-	/*
-	// remember to offset any cell access by index by one because of the empty starting cells
-	unsigned xCellIndex = ((molecule->position.x + PhysicsConfiguration::PhysicsEngineStartPosNegativeDelta.x) / CellWidth);
-	unsigned yCellIndex = ((molecule->position.y + PhysicsConfiguration::PhysicsEngineStartPosNegativeDelta.y) / CellHeight);
-
-	// Remove molecule from the current cell
-	GasMolecules::GasMolecule* prevMolecule = molecule->previousItem;
-	GasMolecules::GasMolecule* nextMolecule = molecule->nextItem;
-	prevMolecule->nextItem = nextMolecule;
-	nextMolecule->previousItem = prevMolecule;
-	// Reduce molecule count in current cell by one
-	m_cellGrid[molecule->cellIndexX + 1][molecule->cellIndexY + 1].MoleculeCount--;
-
-	// Add molecule to the new cell (it can be the same cell, cheaper to reassign than to run if checks)
-	GasMolecules::GasMolecule* startMolecule = m_cellGrid[xCellIndex + 1][yCellIndex + 1].StartMolecule;
-	nextMolecule = startMolecule->nextItem;
-
-	startMolecule->nextItem = molecule;
-	molecule->previousItem = startMolecule;
-	molecule->nextItem = nextMolecule;
-	nextMolecule->previousItem = molecule;
-	//Update cell index in molecule and add one to the cell count
-	molecule->cellIndexX = xCellIndex;
-	molecule->cellIndexY = yCellIndex;
-	m_cellGrid[xCellIndex + 1][yCellIndex + 1].MoleculeCount++;
-	*/
 }
 
 SpaceGridMolecules::Cell* SpaceGridMolecules::GetCell(unsigned indexX, unsigned indexY)

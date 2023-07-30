@@ -30,6 +30,8 @@ namespace Physics::Engine
 	public:
 		void ResolveMoleculeCollisions(unsigned xIndex, float timeDelta);
 
+		void ResolveWallCollisions(float timeDelta, unsigned moleculeIDStart, unsigned moleculeIDLast);
+
 	private:
 		void ResolveWallCollisions(float timeDelta);
 
