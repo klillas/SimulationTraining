@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Profiler|Win32">
+      <Configuration>Profiler</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Profiler|x64">
+      <Configuration>Profiler</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup>
+    <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
+  </PropertyGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{3B1BF3A9-81B8-4885-B6FF-7AAB3AC10D82}</ProjectGuid>
+    <RootNamespace>HelloWorldGPU</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profiler|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profiler|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Profiler|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Profiler|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\Include\Vulkan\Include;$(SolutionDir)\..\Include\GLM;$(SolutionDir)\..\Include\GLFW\include;$(ProjectDir)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <Optimization>Disabled</Optimization>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\Include\GLFW\include\GLFW;$(SolutionDir)\..\Include\GLFW\lib-vc2022;$(SolutionDir)\..\Include\VULKAN\Lib;$(SolutionDir)\..\Include\glm\glm</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <Profile>true</Profile>
+    </Link>
+    <PreBuildEvent>
+      <Command>if not exist "$(OutDir)\shaders\" mkdir "$(OutDir)\shaders\"
+
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.vert -o $(OutDir)\shaders\vert.spv
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(OutDir)\shaders\frag.spv
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe -fshader-stage=compute $(ProjectDir)\shaders\SquareFloat.glsl -o $(OutDir)\shaders\SquareFloat.spv</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\Include\Vulkan\Include;$(SolutionDir)\..\Include\GLM;$(SolutionDir)\..\Include\GLFW\include;$(ProjectDir)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\Include\GLFW\include\GLFW;$(SolutionDir)\..\Include\GLFW\lib-vc2022;$(SolutionDir)\..\Include\VULKAN\Lib;$(SolutionDir)\..\Include\glm\glm</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <Profile>true</Profile>
+    </Link>
+    <PreBuildEvent>
+      <Command>if not exist "$(OutDir)\shaders\" mkdir "$(OutDir)\shaders\"
+
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.vert -o $(OutDir)\shaders\vert.spv
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(OutDir)\shaders\frag.spv
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe -fshader-stage=compute $(ProjectDir)\shaders\SquareFloat.glsl -o $(OutDir)\shaders\SquareFloat.spv</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profiler|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\Include\Vulkan\Include;$(SolutionDir)\..\Include\GLM;$(SolutionDir)\..\Include\GLFW\include;$(ProjectDir)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\Include\GLFW\include\GLFW;$(SolutionDir)\..\Include\GLFW\lib-vc2022;$(SolutionDir)\..\Include\VULKAN\Lib;$(SolutionDir)\..\Include\glm\glm</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <Profile>true</Profile>
+    </Link>
+    <PreBuildEvent>
+      <Command>if not exist "$(OutDir)\shaders\" mkdir "$(OutDir)\shaders\"
+
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.vert -o $(OutDir)\shaders\vert.spv
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(OutDir)\shaders\frag.spv
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe -fshader-stage=compute $(ProjectDir)\shaders\SquareFloat.glsl -o $(OutDir)\shaders\SquareFloat.spv</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\Include\Vulkan\Include;$(SolutionDir)\..\Include\GLM;$(SolutionDir)\..\Include\GLFW\include;$(ProjectDir)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <Optimization>Disabled</Optimization>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\Include\GLFW\include\GLFW;$(SolutionDir)\..\Include\GLFW\lib-vc2022;$(SolutionDir)\..\Include\VULKAN\Lib;$(SolutionDir)\..\Include\glm\glm</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <Profile>true</Profile>
+    </Link>
+    <PreBuildEvent>
+      <Command>if not exist "$(OutDir)\shaders\" mkdir "$(OutDir)\shaders\"
+
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.vert -o $(OutDir)\shaders\vert.spv
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(OutDir)\shaders\frag.spv
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe -fshader-stage=compute $(ProjectDir)\shaders\SquareFloat.glsl -o $(OutDir)\shaders\SquareFloat.spv</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\Include\Vulkan\Include;$(SolutionDir)\..\Include\GLM;$(SolutionDir)\..\Include\GLFW\include;$(ProjectDir)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\Include\GLFW\include\GLFW;$(SolutionDir)\..\Include\GLFW\lib-vc2022;$(SolutionDir)\..\Include\VULKAN\Lib;$(SolutionDir)\..\Include\glm\glm</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <Profile>true</Profile>
+    </Link>
+    <PreBuildEvent>
+      <Command>if not exist "$(OutDir)\shaders\" mkdir "$(OutDir)\shaders\"
+
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.vert -o $(OutDir)\shaders\vert.spv
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(OutDir)\shaders\frag.spv
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe -fshader-stage=compute $(ProjectDir)\shaders\SquareFloat.glsl -o $(OutDir)\shaders\SquareFloat.spv</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profiler|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\Include\Vulkan\Include;$(SolutionDir)\..\Include\GLM;$(SolutionDir)\..\Include\GLFW\include;$(ProjectDir)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\Include\GLFW\include\GLFW;$(SolutionDir)\..\Include\GLFW\lib-vc2022;$(SolutionDir)\..\Include\VULKAN\Lib;$(SolutionDir)\..\Include\glm\glm</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <Profile>true</Profile>
+    </Link>
+    <PreBuildEvent>
+      <Command>if not exist "$(OutDir)\shaders\" mkdir "$(OutDir)\shaders\"
+
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.vert -o $(OutDir)\shaders\vert.spv
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe $(ProjectDir)\shaders\shader.frag -o $(OutDir)\shaders\frag.spv
+$(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe -fshader-stage=compute $(ProjectDir)\shaders\SquareFloat.glsl -o $(OutDir)\shaders\SquareFloat.spv</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="Debug\DebugOutput.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Physics\Engine\PhysicsEngine_ThreadWorker.cpp" />
+    <ClCompile Include="Physics\Engine\PhysicsEngine.cpp" />
+    <ClCompile Include="Physics\RigidObjects\GasMolecules.cpp" />
+    <ClCompile Include="Physics\SpaceGrid\SpaceGridMolecules.cpp" />
+    <ClCompile Include="Vulkan\VulkanInit.cpp" />
+    <ClCompile Include="Vulkan\VulkanRunner.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+    <None Include="shaders\shader.frag" />
+    <None Include="shaders\shader.vert" />
+    <None Include="shaders\SquareFloat.glsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Debug\DebugOutput.h" />
+    <ClInclude Include="Physics\Engine\PhysicsEngine_ThreadWorker.h" />
+    <ClInclude Include="Physics\PhysicsConfiguration.h" />
+    <ClInclude Include="Physics\Engine\IPhysicsEngine.h" />
+    <ClInclude Include="Physics\Engine\PhysicsEngine.h" />
+    <ClInclude Include="Physics\RigidObjects\GasMolecules.h" />
+    <ClInclude Include="Physics\SpaceGrid\SpaceGridMolecules.h" />
+    <ClInclude Include="Vulkan\VulkanInit.h" />
+    <ClInclude Include="Vulkan\VulkanRunner.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\inteltbb.redist.win.2021.10.0.49542\build\native\inteltbb.redist.win.targets" Condition="Exists('..\packages\inteltbb.redist.win.2021.10.0.49542\build\native\inteltbb.redist.win.targets')" />
+    <Import Project="..\packages\inteltbb.devel.win.2021.10.0.49542\build\native\inteltbb.devel.win.targets" Condition="Exists('..\packages\inteltbb.devel.win.2021.10.0.49542\build\native\inteltbb.devel.win.targets')" />
+  </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\inteltbb.redist.win.2021.10.0.49542\build\native\inteltbb.redist.win.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\inteltbb.redist.win.2021.10.0.49542\build\native\inteltbb.redist.win.targets'))" />
+    <Error Condition="!Exists('..\packages\inteltbb.devel.win.2021.10.0.49542\build\native\inteltbb.devel.win.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\inteltbb.devel.win.2021.10.0.49542\build\native\inteltbb.devel.win.targets'))" />
+  </Target>
+</Project>
