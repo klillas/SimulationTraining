@@ -86,9 +86,11 @@ void VulkanInit::initVulkan() {
     createFramebuffers();
     createCommandPool();
     createVertexBuffer();
-    createComputeBuffer();
     createCommandBuffers();
     createSyncObjects();
+
+    createComputeBuffer();
+    createComputePipeline();
 }
 
 void VulkanInit::createVertexBuffer() {
@@ -550,6 +552,107 @@ void VulkanInit::createRenderPass() {
 
 void VulkanInit::createComputePipeline()
 {
+    // Compute shader module
+    auto computeShaderCode = readFile("shaders/SquareFloat.spv");
+    VkShaderModule computeShaderModule = createShaderModule(computeShaderCode);
+
+    // Descriptor Set Layout
+    // The layout of data to be passed to pipelin
+    const VkDescriptorSetLayoutBinding DescriptorSetLayoutBinding[] = {
+        {0, VkDescriptorType::VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VkShaderStageFlagBits::VK_SHADER_STAGE_COMPUTE_BIT},
+        {1, VkDescriptorType::VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VkShaderStageFlagBits::VK_SHADER_STAGE_COMPUTE_BIT}
+    };
+
+    VkDescriptorSetLayoutCreateInfo DescriptorSetLayoutCreateInfo{};
+    DescriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    DescriptorSetLayoutCreateInfo.bindingCount = 2;
+    DescriptorSetLayoutCreateInfo.pBindings = DescriptorSetLayoutBinding;
+
+    VkDescriptorSetLayout DescriptorSetLayout;
+    vkCreateDescriptorSetLayout(device, &DescriptorSetLayoutCreateInfo, nullptr, &DescriptorSetLayout);
+
+    // Pipeline Layout
+    VkPipelineLayoutCreateInfo PipelineLayoutInfo{};
+    PipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    PipelineLayoutInfo.setLayoutCount = 1;
+    PipelineLayoutInfo.pSetLayouts = &DescriptorSetLayout;
+    VkPipelineLayout PipelineLayout;
+    vkCreatePipelineLayout(device, &PipelineLayoutInfo, nullptr, &PipelineLayout);
+
+    // Compute Pipeline
+    VkPipelineShaderStageCreateInfo PipelineShaderCreateInfo{};
+    PipelineShaderCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    PipelineShaderCreateInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+    PipelineShaderCreateInfo.module = computeShaderModule;
+    PipelineShaderCreateInfo.pName = "main"; // Entry point of the compute shader
+
+    VkComputePipelineCreateInfo ComputePipelineCreateInfo{};
+    ComputePipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+    ComputePipelineCreateInfo.stage = PipelineShaderCreateInfo;
+    ComputePipelineCreateInfo.layout = PipelineLayout;
+
+    VkPipeline ComputePipeline{};
+    vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &ComputePipelineCreateInfo, nullptr, &ComputePipeline);
+
+    ////////////////////////////////////////////////////////////////////////
+    //                          DESCRIPTOR SETS                           //
+    ////////////////////////////////////////////////////////////////////////
+    // Descriptor sets must be allocated in a vk::DescriptorPool, so we need to create one first
+    VkDescriptorPoolSize DescriptorPoolSize(VkDescriptorType::VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2);
+    VkDescriptorPoolCreateInfo DescriptorPoolCreateInfo{};
+    DescriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    DescriptorPoolCreateInfo.poolSizeCount = 1;
+    DescriptorPoolCreateInfo.pPoolSizes = &DescriptorPoolSize;
+    DescriptorPoolCreateInfo.maxSets = 1; // Set this to the maximum number of descriptor sets you'll allocate
+
+    VkDescriptorPool DescriptorPool;
+    vkCreateDescriptorPool(device, &DescriptorPoolCreateInfo, nullptr, &DescriptorPool);
+
+    // Allocate descriptor sets, update them to use buffers:
+    VkDescriptorSetAllocateInfo DescriptorSetAllocInfo{};
+    DescriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    DescriptorSetAllocInfo.descriptorPool = DescriptorPool;
+    DescriptorSetAllocInfo.descriptorSetCount = 1;
+    DescriptorSetAllocInfo.pSetLayouts = &DescriptorSetLayout;
+
+    VkDescriptorSet DescriptorSet;
+    vkAllocateDescriptorSets(device, &DescriptorSetAllocInfo, &DescriptorSet);
+
+    // TODO: K.L. The buffer size should be dynamically calculated based on the actual buffer size
+    VkDeviceSize bufferSize = sizeof(float) * 2;
+    VkDescriptorBufferInfo InBufferInfo(computeInBuffer, 0, bufferSize);
+    VkDescriptorBufferInfo OutBufferInfo(computeOutBuffer, 0, bufferSize);
+
+    /*
+    const std::vector<VkWriteDescriptorSet> WriteDescriptorSets = {
+        {DescriptorSet, 0, 0, 1, VkDescriptorType::eStorageBuffer, nullptr, &InBufferInfo},
+        {DescriptorSet, 1, 0, 1, VkDescriptorType::eStorageBuffer, nullptr, &OutBufferInfo},
+    };
+    Device.updateDescriptorSets(WriteDescriptorSets, {});
+    */
+
+    VkWriteDescriptorSet WriteDescriptorSet1{};
+    WriteDescriptorSet1.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    WriteDescriptorSet1.dstSet = DescriptorSet;
+    WriteDescriptorSet1.dstBinding = 0; // Must match the binding number in the shader layout
+    WriteDescriptorSet1.dstArrayElement = 0;
+    WriteDescriptorSet1.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    WriteDescriptorSet1.descriptorCount = 1;
+    WriteDescriptorSet1.pBufferInfo = &InBufferInfo;
+    VkWriteDescriptorSet WriteDescriptorSet2{};
+    WriteDescriptorSet2.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    WriteDescriptorSet2.dstSet = DescriptorSet;
+    WriteDescriptorSet2.dstBinding = 1; // Must match the binding number in the shader layout
+    WriteDescriptorSet2.dstArrayElement = 0;
+    WriteDescriptorSet2.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    WriteDescriptorSet2.descriptorCount = 1;
+    WriteDescriptorSet2.pBufferInfo = &OutBufferInfo;
+    VkWriteDescriptorSet WriteDescriptorSets[2];
+    WriteDescriptorSets[0] = WriteDescriptorSet1;
+    WriteDescriptorSets[1] = WriteDescriptorSet2;
+
+    vkUpdateDescriptorSets(device, 2, WriteDescriptorSets, 0, nullptr);
+
     /*
     auto computeShaderCode = readFile("shaders/SquareFloat.spv");
 

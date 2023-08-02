@@ -1,16 +1,15 @@
-#version 450
+#version 430
+layout(local_size_x = 1, local_size_y = 1) in;
 
-// Input buffer
-layout(binding = 0) buffer InputBuffer {
-    float inputValue;
-};
-
-// Output buffer
-layout(binding = 1) buffer OutputBuffer {
-    float outputValue;
-};
+layout(std430, binding = 0) buffer lay0 { int inbuf[]; };
+layout(std430, binding = 1) buffer lay1 { int outbuf[]; };
 
 void main() {
-    // Square the input value
-    outputValue = inputValue * inputValue;
+	// drop threads outside the buffer dimensions.
+	/* if(params.Width <= gl_GlobalInvocationID.x || params.Height <= gl_GlobalInvocationID.y){ */
+	/* 	return; */
+	/* } */
+	const uint id = gl_GlobalInvocationID.x; // current offset
+
+	outbuf[id] = inbuf[id] * inbuf[id];
 }
