@@ -6,6 +6,7 @@
 #include <chrono>
 
 constexpr size_t MaxVertices = 100000000;
+constexpr size_t MaxComputeBufSize_Bytes = 1000;
 
 std::vector<VulkanInit::Vertex> vertices = {};
 
@@ -123,7 +124,7 @@ void VulkanInit::createVertexBuffer() {
 void VulkanInit::createComputeBuffer() {
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.size = sizeof(float) * 2;
+    bufferInfo.size = MaxComputeBufSize_Bytes;
     bufferInfo.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     bufferInfo.queueFamilyIndexCount = 1;
@@ -178,14 +179,13 @@ void VulkanInit::updateVertexBuffer()
 
 void VulkanInit::updateComputeBuffer()
 {
-    VkDeviceSize bufferSize = sizeof(float) * 2;
-
     // Map the vertex buffer memory
     void* data;
-    vkMapMemory(device, computeInBufferMemory, 0, bufferSize, 0, &data);
+    vkMapMemory(device, computeInBufferMemory, 0, MaxComputeBufSize_Bytes, 0, &data);
 
     // Copy the updated vertex data to the mapped memory
     float localBuf[] = {1.0f, 2.0f};
+    VkDeviceSize bufferSize = sizeof(localBuf) * sizeof(localBuf[0]);
     memcpy(data, localBuf, static_cast<size_t>(bufferSize));
 
     // Unmap the vertex buffer memory
@@ -218,9 +218,10 @@ void VulkanInit::mainLoop() {
         m_VulkanFrameRenderStartCallback();
 
         glfwPollEvents();
-        updateVertexBuffer();
-        // TODO: K.L. Should be moved to be ran after the graphics pipeline?
+
         updateComputeBuffer();
+
+        updateVertexBuffer();
         drawFrame();
 
         frameCounter++;
@@ -619,17 +620,8 @@ void VulkanInit::createComputePipeline()
     vkAllocateDescriptorSets(device, &DescriptorSetAllocInfo, &DescriptorSet);
 
     // TODO: K.L. The buffer size should be dynamically calculated based on the actual buffer size
-    VkDeviceSize bufferSize = sizeof(float) * 2;
-    VkDescriptorBufferInfo InBufferInfo(computeInBuffer, 0, bufferSize);
-    VkDescriptorBufferInfo OutBufferInfo(computeOutBuffer, 0, bufferSize);
-
-    /*
-    const std::vector<VkWriteDescriptorSet> WriteDescriptorSets = {
-        {DescriptorSet, 0, 0, 1, VkDescriptorType::eStorageBuffer, nullptr, &InBufferInfo},
-        {DescriptorSet, 1, 0, 1, VkDescriptorType::eStorageBuffer, nullptr, &OutBufferInfo},
-    };
-    Device.updateDescriptorSets(WriteDescriptorSets, {});
-    */
+    VkDescriptorBufferInfo InBufferInfo(computeInBuffer, 0, MaxComputeBufSize_Bytes);
+    VkDescriptorBufferInfo OutBufferInfo(computeOutBuffer, 0, MaxComputeBufSize_Bytes);
 
     VkWriteDescriptorSet WriteDescriptorSet1{};
     WriteDescriptorSet1.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -652,6 +644,122 @@ void VulkanInit::createComputePipeline()
     WriteDescriptorSets[1] = WriteDescriptorSet2;
 
     vkUpdateDescriptorSets(device, 2, WriteDescriptorSets, 0, nullptr);
+
+    ////////////////////////////////////////////////////////////////////////
+    //                         SUBMIT WORK TO GPU                         //
+    ////////////////////////////////////////////////////////////////////////
+    // Command Pool
+    VkCommandPool CommandPool{};
+    QueueFamilyIndices QueueFamilyIndices = findQueueFamilies(physicalDevice);
+
+    VkCommandPoolCreateInfo CommandPoolCreateInfo{};
+    CommandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    CommandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    CommandPoolCreateInfo.queueFamilyIndex = QueueFamilyIndices.computeFamily.value();
+
+    if (vkCreateCommandPool(device, &CommandPoolCreateInfo, nullptr, &CommandPool) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create command pool!");
+    }
+
+    // Allocate Command buffer from Pool
+    // TODO: Deallocate later
+    VkCommandBuffer* CommandBuffers = new VkCommandBuffer[1];
+
+    VkCommandBufferAllocateInfo CommandBufferAllocateInfo{};
+    CommandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    CommandBufferAllocateInfo.commandPool = CommandPool;
+    CommandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    CommandBufferAllocateInfo.commandBufferCount = 1;
+
+    if (vkAllocateCommandBuffers(device, &CommandBufferAllocateInfo, CommandBuffers) != VK_SUCCESS) {
+        throw std::runtime_error("failed to allocate command buffers!");
+    }
+    VkCommandBuffer CommandBuffer = CommandBuffers[0];
+
+    // Record commands
+    VkCommandBufferBeginInfo CommandBufferBeginInfo{};
+    CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    CommandBufferBeginInfo.flags = VkCommandBufferUsageFlagBits::VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+    if (vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo) != VK_SUCCESS) {
+        throw std::runtime_error("failed to begin recording command buffer!");
+    }
+    
+    //Dispatch the compute shader
+    vkCmdBindPipeline(CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, ComputePipeline);
+    vkCmdBindDescriptorSets(CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, PipelineLayout, 0, 1, &DescriptorSet, 0, nullptr);
+    // TODO: This needs to be dynamic according to GPU resources and problem type
+    vkCmdDispatch(CommandBuffer, 1, 1, 1); // Number of workgroups to execute the compute shader
+    vkEndCommandBuffer(CommandBuffer);
+
+    // Fence and submit
+    VkFence Fence;
+    VkFenceCreateInfo FenceInfo{};
+    FenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    FenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+    if (vkCreateFence(device, &FenceInfo, nullptr, &Fence) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to create synchronization objects for a frame!");
+    }
+
+    VkSubmitInfo SubmitInfo{};
+    SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    SubmitInfo.waitSemaphoreCount = 0;
+    SubmitInfo.pWaitSemaphores = nullptr;
+    SubmitInfo.commandBufferCount = 1;
+    SubmitInfo.pCommandBuffers = &CommandBuffer;
+
+    vkResetFences(device, 1, &Fence);
+    
+    if (vkQueueSubmit(computeQueue, 1, &SubmitInfo, Fence) != VK_SUCCESS) {
+        throw std::runtime_error("failed to submit draw command buffer!");
+    }
+
+    vkWaitForFences(device, 1, &Fence, true, uint64_t(-1));
+
+
+    // Map output buffer and read results
+    void* data;
+    vkMapMemory(device, computeOutBufferMemory, 0, MaxComputeBufSize_Bytes, 0, &data);
+
+    // Copy data from GPU to CPU
+    uint8_t localBuf[MaxComputeBufSize_Bytes];
+    VkDeviceSize bufferSize = MaxComputeBufSize_Bytes;
+    memcpy(localBuf, data, MaxComputeBufSize_Bytes);
+
+    // Unmap the vertex buffer memory
+    vkUnmapMemory(device, computeOutBufferMemory);
+
+
+    /*
+    void* mappedData;
+    vkMapMemory(device, bufferMemory, 0, sizeof(float), 0, &mappedData);
+    float result = *reinterpret_cast<float*>(mappedData);
+    vkUnmapMemory(device, bufferMemory);
+    */
+
+    /*
+    InBufferPtr = static_cast<int32_t*>(Device.mapMemory(InBufferMemory, 0, BufferSize));
+    std::cout << std::endl;
+    std::cout << "INPUT:  ";
+    for (uint32_t I = 0; I < NumElements; ++I) {
+        std::cout << InBufferPtr[I] << " ";
+    }
+    std::cout << std::endl;
+    Device.unmapMemory(InBufferMemory);
+
+    int32_t* OutBufferPtr = static_cast<int32_t*>(Device.mapMemory(OutBufferMemory, 0, BufferSize));
+    std::cout << "OUTPUT: ";
+    for (uint32_t I = 0; I < NumElements; ++I) {
+        std::cout << OutBufferPtr[I] << " ";
+    }
+    std::cout << std::endl;
+    Device.unmapMemory(OutBufferMemory);
+    */
+
+
+
 
     /*
     auto computeShaderCode = readFile("shaders/SquareFloat.spv");
