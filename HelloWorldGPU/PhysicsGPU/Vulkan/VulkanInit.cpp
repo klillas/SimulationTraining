@@ -6,9 +6,13 @@
 #include <chrono>
 
 constexpr size_t MaxVertices = 100000000;
-constexpr size_t MaxComputeBufSize_Bytes = 1000;
+constexpr size_t MaxComputeBufSize_Bytes = 1024;
 
 std::vector<VulkanInit::Vertex> vertices = {};
+
+struct ComputeShaderPushConstants {
+    uint32_t InBufferSize_items;
+};
 
 
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
@@ -184,12 +188,107 @@ void VulkanInit::updateComputeBuffer()
     vkMapMemory(device, computeInBufferMemory, 0, MaxComputeBufSize_Bytes, 0, &data);
 
     // Copy the updated vertex data to the mapped memory
-    float localBuf[] = {1.0f, 2.0f};
+    static float localBuf[] = {1.0f, 2.0f};
+    localBuf[0] += 1;
+    localBuf[1] += 1;
     VkDeviceSize bufferSize = sizeof(localBuf) * sizeof(localBuf[0]);
     memcpy(data, localBuf, static_cast<size_t>(bufferSize));
 
     // Unmap the vertex buffer memory
     vkUnmapMemory(device, computeInBufferMemory);
+}
+
+void VulkanInit::runComputeShader()
+{
+    ////////////////////////////////////////////////////////////////////////
+    //                         SUBMIT WORK TO GPU                         //
+    ////////////////////////////////////////////////////////////////////////
+    // Command Pool
+    VkCommandPool CommandPool{};
+    QueueFamilyIndices QueueFamilyIndices = findQueueFamilies(physicalDevice);
+
+    VkCommandPoolCreateInfo CommandPoolCreateInfo{};
+    CommandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    CommandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    CommandPoolCreateInfo.queueFamilyIndex = QueueFamilyIndices.computeFamily.value();
+
+    if (vkCreateCommandPool(device, &CommandPoolCreateInfo, nullptr, &CommandPool) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create command pool!");
+    }
+
+    // Allocate Command buffer from Pool
+    // TODO: Deallocate later
+    VkCommandBuffer* CommandBuffers = new VkCommandBuffer[1];
+
+    VkCommandBufferAllocateInfo CommandBufferAllocateInfo{};
+    CommandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    CommandBufferAllocateInfo.commandPool = CommandPool;
+    CommandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    CommandBufferAllocateInfo.commandBufferCount = 1;
+
+    if (vkAllocateCommandBuffers(device, &CommandBufferAllocateInfo, CommandBuffers) != VK_SUCCESS) {
+        throw std::runtime_error("failed to allocate command buffers!");
+    }
+    VkCommandBuffer CommandBuffer = CommandBuffers[0];
+
+    // Record commands
+    VkCommandBufferBeginInfo CommandBufferBeginInfo{};
+    CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    CommandBufferBeginInfo.flags = VkCommandBufferUsageFlagBits::VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+    if (vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo) != VK_SUCCESS) {
+        throw std::runtime_error("failed to begin recording command buffer!");
+    }
+
+    //Dispatch the compute shader
+    vkCmdBindPipeline(CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline);
+    vkCmdBindDescriptorSets(CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 0, 1, &computeDescriptorSet, 0, nullptr);
+    // Set the buffer size as a uniform
+    ComputeShaderPushConstants pushConstants{};
+    pushConstants.InBufferSize_items = MaxComputeBufSize_Bytes / sizeof(float);
+    vkCmdPushConstants(CommandBuffer, computePipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(ComputeShaderPushConstants), &pushConstants);
+    // TODO: This needs to be dynamic according to GPU resources and problem type
+    vkCmdDispatch(CommandBuffer, 2, 1, 1); // Number of workgroups to execute the compute shader
+    vkEndCommandBuffer(CommandBuffer);
+
+    // Fence and submit
+    VkFence Fence;
+    VkFenceCreateInfo FenceInfo{};
+    FenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    FenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+    if (vkCreateFence(device, &FenceInfo, nullptr, &Fence) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to create synchronization objects for a frame!");
+    }
+
+    VkSubmitInfo SubmitInfo{};
+    SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    SubmitInfo.waitSemaphoreCount = 0;
+    SubmitInfo.pWaitSemaphores = nullptr;
+    SubmitInfo.commandBufferCount = 1;
+    SubmitInfo.pCommandBuffers = &CommandBuffer;
+
+    vkResetFences(device, 1, &Fence);
+
+    if (vkQueueSubmit(computeQueue, 1, &SubmitInfo, Fence) != VK_SUCCESS) {
+        throw std::runtime_error("failed to submit draw command buffer!");
+    }
+
+    vkWaitForFences(device, 1, &Fence, true, uint64_t(-1));
+
+
+    // Map output buffer and read results
+    void* data;
+    vkMapMemory(device, computeOutBufferMemory, 0, MaxComputeBufSize_Bytes, 0, &data);
+
+    // Copy data from GPU to CPU
+    uint32_t localBuf[MaxComputeBufSize_Bytes / sizeof(uint32_t)];
+    VkDeviceSize bufferSize = MaxComputeBufSize_Bytes;
+    memcpy(localBuf, data, MaxComputeBufSize_Bytes);
+
+    // Unmap the vertex buffer memory
+    vkUnmapMemory(device, computeOutBufferMemory);
 }
 
 uint32_t VulkanInit::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
@@ -220,6 +319,7 @@ void VulkanInit::mainLoop() {
         glfwPollEvents();
 
         updateComputeBuffer();
+        runComputeShader();
 
         updateVertexBuffer();
         drawFrame();
@@ -569,16 +669,22 @@ void VulkanInit::createComputePipeline()
     DescriptorSetLayoutCreateInfo.bindingCount = 2;
     DescriptorSetLayoutCreateInfo.pBindings = DescriptorSetLayoutBinding;
 
-    VkDescriptorSetLayout DescriptorSetLayout;
-    vkCreateDescriptorSetLayout(device, &DescriptorSetLayoutCreateInfo, nullptr, &DescriptorSetLayout);
+    VkDescriptorSetLayout computeDescriptorSetLayout;
+    vkCreateDescriptorSetLayout(device, &DescriptorSetLayoutCreateInfo, nullptr, &computeDescriptorSetLayout);
+
+    VkPushConstantRange pushConstantRange = {};
+    pushConstantRange.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+    pushConstantRange.offset = 0;
+    pushConstantRange.size = sizeof(ComputeShaderPushConstants); // Size of the push constant data structure
 
     // Pipeline Layout
     VkPipelineLayoutCreateInfo PipelineLayoutInfo{};
     PipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     PipelineLayoutInfo.setLayoutCount = 1;
-    PipelineLayoutInfo.pSetLayouts = &DescriptorSetLayout;
-    VkPipelineLayout PipelineLayout;
-    vkCreatePipelineLayout(device, &PipelineLayoutInfo, nullptr, &PipelineLayout);
+    PipelineLayoutInfo.pSetLayouts = &computeDescriptorSetLayout;
+    PipelineLayoutInfo.pushConstantRangeCount = 1;
+    PipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
+    vkCreatePipelineLayout(device, &PipelineLayoutInfo, nullptr, &computePipelineLayout);
 
     // Compute Pipeline
     VkPipelineShaderStageCreateInfo PipelineShaderCreateInfo{};
@@ -590,10 +696,9 @@ void VulkanInit::createComputePipeline()
     VkComputePipelineCreateInfo ComputePipelineCreateInfo{};
     ComputePipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
     ComputePipelineCreateInfo.stage = PipelineShaderCreateInfo;
-    ComputePipelineCreateInfo.layout = PipelineLayout;
+    ComputePipelineCreateInfo.layout = computePipelineLayout;
 
-    VkPipeline ComputePipeline{};
-    vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &ComputePipelineCreateInfo, nullptr, &ComputePipeline);
+    vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &ComputePipelineCreateInfo, nullptr, &computePipeline);
 
     ////////////////////////////////////////////////////////////////////////
     //                          DESCRIPTOR SETS                           //
@@ -614,18 +719,16 @@ void VulkanInit::createComputePipeline()
     DescriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     DescriptorSetAllocInfo.descriptorPool = DescriptorPool;
     DescriptorSetAllocInfo.descriptorSetCount = 1;
-    DescriptorSetAllocInfo.pSetLayouts = &DescriptorSetLayout;
+    DescriptorSetAllocInfo.pSetLayouts = &computeDescriptorSetLayout;
 
-    VkDescriptorSet DescriptorSet;
-    vkAllocateDescriptorSets(device, &DescriptorSetAllocInfo, &DescriptorSet);
+    vkAllocateDescriptorSets(device, &DescriptorSetAllocInfo, &computeDescriptorSet);
 
-    // TODO: K.L. The buffer size should be dynamically calculated based on the actual buffer size
     VkDescriptorBufferInfo InBufferInfo(computeInBuffer, 0, MaxComputeBufSize_Bytes);
     VkDescriptorBufferInfo OutBufferInfo(computeOutBuffer, 0, MaxComputeBufSize_Bytes);
 
     VkWriteDescriptorSet WriteDescriptorSet1{};
     WriteDescriptorSet1.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    WriteDescriptorSet1.dstSet = DescriptorSet;
+    WriteDescriptorSet1.dstSet = computeDescriptorSet;
     WriteDescriptorSet1.dstBinding = 0; // Must match the binding number in the shader layout
     WriteDescriptorSet1.dstArrayElement = 0;
     WriteDescriptorSet1.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
@@ -633,7 +736,7 @@ void VulkanInit::createComputePipeline()
     WriteDescriptorSet1.pBufferInfo = &InBufferInfo;
     VkWriteDescriptorSet WriteDescriptorSet2{};
     WriteDescriptorSet2.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    WriteDescriptorSet2.dstSet = DescriptorSet;
+    WriteDescriptorSet2.dstSet = computeDescriptorSet;
     WriteDescriptorSet2.dstBinding = 1; // Must match the binding number in the shader layout
     WriteDescriptorSet2.dstArrayElement = 0;
     WriteDescriptorSet2.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
@@ -644,236 +747,6 @@ void VulkanInit::createComputePipeline()
     WriteDescriptorSets[1] = WriteDescriptorSet2;
 
     vkUpdateDescriptorSets(device, 2, WriteDescriptorSets, 0, nullptr);
-
-    ////////////////////////////////////////////////////////////////////////
-    //                         SUBMIT WORK TO GPU                         //
-    ////////////////////////////////////////////////////////////////////////
-    // Command Pool
-    VkCommandPool CommandPool{};
-    QueueFamilyIndices QueueFamilyIndices = findQueueFamilies(physicalDevice);
-
-    VkCommandPoolCreateInfo CommandPoolCreateInfo{};
-    CommandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    CommandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    CommandPoolCreateInfo.queueFamilyIndex = QueueFamilyIndices.computeFamily.value();
-
-    if (vkCreateCommandPool(device, &CommandPoolCreateInfo, nullptr, &CommandPool) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create command pool!");
-    }
-
-    // Allocate Command buffer from Pool
-    // TODO: Deallocate later
-    VkCommandBuffer* CommandBuffers = new VkCommandBuffer[1];
-
-    VkCommandBufferAllocateInfo CommandBufferAllocateInfo{};
-    CommandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    CommandBufferAllocateInfo.commandPool = CommandPool;
-    CommandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    CommandBufferAllocateInfo.commandBufferCount = 1;
-
-    if (vkAllocateCommandBuffers(device, &CommandBufferAllocateInfo, CommandBuffers) != VK_SUCCESS) {
-        throw std::runtime_error("failed to allocate command buffers!");
-    }
-    VkCommandBuffer CommandBuffer = CommandBuffers[0];
-
-    // Record commands
-    VkCommandBufferBeginInfo CommandBufferBeginInfo{};
-    CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    CommandBufferBeginInfo.flags = VkCommandBufferUsageFlagBits::VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-    if (vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo) != VK_SUCCESS) {
-        throw std::runtime_error("failed to begin recording command buffer!");
-    }
-    
-    //Dispatch the compute shader
-    vkCmdBindPipeline(CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, ComputePipeline);
-    vkCmdBindDescriptorSets(CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, PipelineLayout, 0, 1, &DescriptorSet, 0, nullptr);
-    // TODO: This needs to be dynamic according to GPU resources and problem type
-    vkCmdDispatch(CommandBuffer, 1, 1, 1); // Number of workgroups to execute the compute shader
-    vkEndCommandBuffer(CommandBuffer);
-
-    // Fence and submit
-    VkFence Fence;
-    VkFenceCreateInfo FenceInfo{};
-    FenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    FenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-    if (vkCreateFence(device, &FenceInfo, nullptr, &Fence) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create synchronization objects for a frame!");
-    }
-
-    VkSubmitInfo SubmitInfo{};
-    SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    SubmitInfo.waitSemaphoreCount = 0;
-    SubmitInfo.pWaitSemaphores = nullptr;
-    SubmitInfo.commandBufferCount = 1;
-    SubmitInfo.pCommandBuffers = &CommandBuffer;
-
-    vkResetFences(device, 1, &Fence);
-    
-    if (vkQueueSubmit(computeQueue, 1, &SubmitInfo, Fence) != VK_SUCCESS) {
-        throw std::runtime_error("failed to submit draw command buffer!");
-    }
-
-    vkWaitForFences(device, 1, &Fence, true, uint64_t(-1));
-
-
-    // Map output buffer and read results
-    void* data;
-    vkMapMemory(device, computeOutBufferMemory, 0, MaxComputeBufSize_Bytes, 0, &data);
-
-    // Copy data from GPU to CPU
-    uint8_t localBuf[MaxComputeBufSize_Bytes];
-    VkDeviceSize bufferSize = MaxComputeBufSize_Bytes;
-    memcpy(localBuf, data, MaxComputeBufSize_Bytes);
-
-    // Unmap the vertex buffer memory
-    vkUnmapMemory(device, computeOutBufferMemory);
-
-
-    /*
-    void* mappedData;
-    vkMapMemory(device, bufferMemory, 0, sizeof(float), 0, &mappedData);
-    float result = *reinterpret_cast<float*>(mappedData);
-    vkUnmapMemory(device, bufferMemory);
-    */
-
-    /*
-    InBufferPtr = static_cast<int32_t*>(Device.mapMemory(InBufferMemory, 0, BufferSize));
-    std::cout << std::endl;
-    std::cout << "INPUT:  ";
-    for (uint32_t I = 0; I < NumElements; ++I) {
-        std::cout << InBufferPtr[I] << " ";
-    }
-    std::cout << std::endl;
-    Device.unmapMemory(InBufferMemory);
-
-    int32_t* OutBufferPtr = static_cast<int32_t*>(Device.mapMemory(OutBufferMemory, 0, BufferSize));
-    std::cout << "OUTPUT: ";
-    for (uint32_t I = 0; I < NumElements; ++I) {
-        std::cout << OutBufferPtr[I] << " ";
-    }
-    std::cout << std::endl;
-    Device.unmapMemory(OutBufferMemory);
-    */
-
-
-
-
-    /*
-    auto computeShaderCode = readFile("shaders/SquareFloat.spv");
-
-    VkShaderModule computeShaderModule = createShaderModule(computeShaderCode);
-
-    // Create the compute pipeline
-    VkPipelineShaderStageCreateInfo computeShaderStageInfo{};
-    computeShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    computeShaderStageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-    computeShaderStageInfo.module = computeShaderModule;
-    computeShaderStageInfo.pName = "main"; // Entry point of the compute shader
-
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-
-    VkPipelineLayout pipelineLayout;
-    vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout);
-
-    VkComputePipelineCreateInfo pipelineInfo{};
-    pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-    pipelineInfo.stage = computeShaderStageInfo;
-    pipelineInfo.layout = pipelineLayout;
-
-    VkPipeline computePipeline;
-    vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &computePipeline);
-
-    // 4. Create the input and output buffers
-    float inputFloat = 4.0f; // The float value to square
-
-    VkBuffer inputBuffer;
-    VkBuffer outputBuffer;
-    VkDeviceMemory bufferMemory;
-
-    // Create and allocate buffers and memory using Vulkan functions.
-    // The input buffer will contain the inputFloat, and the output buffer will store the result.
-
-    // 5. Create a descriptor set layout for the compute shader
-    VkDescriptorSetLayoutBinding binding{};
-    binding.binding = 0; // Binding number in the shader
-    binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    binding.descriptorCount = 1;
-    binding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
-
-    VkDescriptorSetLayoutCreateInfo descriptorLayoutInfo{};
-    descriptorLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    descriptorLayoutInfo.bindingCount = 1;
-    descriptorLayoutInfo.pBindings = &binding;
-
-    VkDescriptorSetLayout descriptorSetLayout;
-    vkCreateDescriptorSetLayout(device, &descriptorLayoutInfo, nullptr, &descriptorSetLayout);
-
-    // 6. Create a descriptor pool and allocate descriptor sets
-    VkDescriptorPoolSize poolSize{};
-    poolSize.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    poolSize.descriptorCount = 1;
-
-    VkDescriptorPoolCreateInfo descriptorPoolInfo{};
-    descriptorPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    descriptorPoolInfo.poolSizeCount = 1;
-    descriptorPoolInfo.pPoolSizes = &poolSize;
-    descriptorPoolInfo.maxSets = 1; // Set this to the maximum number of descriptor sets you'll allocate
-
-    VkDescriptorPool descriptorPool;
-    vkCreateDescriptorPool(device, &descriptorPoolInfo, nullptr, &descriptorPool);
-
-    VkDescriptorSetAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocInfo.descriptorPool = descriptorPool;
-    allocInfo.descriptorSetCount = 1;
-    allocInfo.pSetLayouts = &descriptorSetLayout;
-
-    VkDescriptorSet descriptorSet;
-    vkAllocateDescriptorSets(device, &allocInfo, &descriptorSet);
-
-    // 7. Update the descriptor set with the input and output buffers
-    VkDescriptorBufferInfo bufferInfo{};
-    bufferInfo.buffer = inputBuffer; // Input buffer associated with the compute shader
-    bufferInfo.offset = 0;
-    bufferInfo.range = VK_WHOLE_SIZE;
-
-    VkWriteDescriptorSet descriptorWrite{};
-    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptorWrite.dstSet = descriptorSet;
-    descriptorWrite.dstBinding = 0; // Must match the binding number in the shader layout
-    descriptorWrite.dstArrayElement = 0;
-    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    descriptorWrite.descriptorCount = 1;
-    descriptorWrite.pBufferInfo = &bufferInfo;
-
-    vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
-
-    // 5. Dispatch the compute shader
-    VkCommandBuffer commandBuffer; // Begin a command buffer
-
-    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline);
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
-    vkCmdDispatch(commandBuffer, 1, 1, 1); // Number of workgroups to execute the compute shader
-
-    // End the command buffer and submit it to the queue for execution
-    // ...
-
-    // 9. Read the result from the output buffer
-    void* mappedData;
-    vkMapMemory(device, bufferMemory, 0, sizeof(float), 0, &mappedData);
-    float result = *reinterpret_cast<float*>(mappedData);
-    vkUnmapMemory(device, bufferMemory);
-
-    // Cleanup resources (e.g., buffers, shader modules, etc.)
-    // ...
-
-    // Output the result
-    std::cout << "Result: " << result << std::endl;
-    */
 }
 
 

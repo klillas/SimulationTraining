@@ -156,6 +156,8 @@ public:
 
     void drawFrame();
 
+    void runComputeShader();
+
     VkShaderModule createShaderModule(const std::vector<char>& code);
 
     VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
@@ -210,6 +212,11 @@ private:
 
     VkCommandPool commandPool;
     std::vector<VkCommandBuffer> commandBuffers;
+
+    VkPipeline computePipeline;
+    VkDescriptorSetLayout computeDescriptorSetLayout;
+    VkPipelineLayout computePipelineLayout;
+    VkDescriptorSet computeDescriptorSet;
 
     std::vector<VkSemaphore> imageAvailableSemaphores;
     std::vector<VkSemaphore> renderFinishedSemaphores;
