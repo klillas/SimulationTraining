@@ -269,6 +269,7 @@ $(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe -fshader-stage=compute $(ProjectD
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Debug\DebugOutput.cpp" />
+    <ClCompile Include="GPUPhysics\Engine\GPUPhysicsEngine.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Physics\Engine\PhysicsEngine_ThreadWorker.cpp" />
     <ClCompile Include="Physics\Engine\PhysicsEngine.cpp" />
@@ -285,6 +286,8 @@ $(ProjectDir)\..\..\..\VulkanSDK\Bin\glslc.exe -fshader-stage=compute $(ProjectD
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Debug\DebugOutput.h" />
+    <ClInclude Include="GPUPhysics\GPUPhysicsConfiguration.h" />
+    <ClInclude Include="GPUPhysics\Engine\GPUPhysicsEngine.h" />
     <ClInclude Include="Physics\Engine\PhysicsEngine_ThreadWorker.h" />
     <ClInclude Include="Physics\PhysicsConfiguration.h" />
     <ClInclude Include="Physics\Engine\IPhysicsEngine.h" />

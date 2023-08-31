@@ -4,9 +4,12 @@
 #include <algorithm>
 #include <fstream>
 #include <chrono>
+#include "./Physics/PhysicsConfiguration.h"
+#include "GPUPhysics/Engine/GPUPhysicsEngine.h"
+
+using namespace Physics;
 
 constexpr size_t MaxVertices = 100000000;
-constexpr size_t MaxComputeBufSize_Bytes = 1024;
 
 std::vector<VulkanInit::Vertex> vertices = {};
 
@@ -54,6 +57,14 @@ void VulkanInit::RegisterVulkanGetVerticesCallback(VulkanGetVerticesCallback cal
     assert(!m_VulkanGetVerticesCallback);
 
     m_VulkanGetVerticesCallback = callback;
+}
+
+void VulkanInit::RegisterVulkanGetComputeBuffersCallback(VulkanGetComputeBuffersCallback callback)
+{
+    assert(callback);
+    assert(!m_VulkanGetComputeBuffersCallback);
+
+    m_VulkanGetComputeBuffersCallback = callback;
 }
 
 void VulkanInit::run() {
@@ -126,9 +137,14 @@ void VulkanInit::createVertexBuffer() {
 
 // TODO: K.L. Staging buffer approach could be added to speed up memory transfer between CPU and GPU?
 void VulkanInit::createComputeBuffer() {
+    // Fetch the input data
+    uint8_t* bufferData = nullptr;
+    uint32_t bufferDataLengthBytes;
+    m_VulkanGetComputeBuffersCallback(bufferData, bufferDataLengthBytes);
+
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.size = MaxComputeBufSize_Bytes;
+    bufferInfo.size = bufferDataLengthBytes;
     bufferInfo.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     bufferInfo.queueFamilyIndexCount = 1;
@@ -162,6 +178,8 @@ void VulkanInit::createComputeBuffer() {
 
     vkBindBufferMemory(device, computeInBuffer, computeInBufferMemory, 0);
     vkBindBufferMemory(device, computeOutBuffer, computeOutBufferMemory, 0);
+
+    vkMapMemory(device, computeInBufferMemory, 0, bufferDataLengthBytes, 0, &computeInBufferMemoryMapped);
 }
 
 void VulkanInit::updateVertexBuffer()
@@ -183,19 +201,14 @@ void VulkanInit::updateVertexBuffer()
 
 void VulkanInit::updateComputeBuffer()
 {
-    // Map the vertex buffer memory
-    void* data;
-    vkMapMemory(device, computeInBufferMemory, 0, MaxComputeBufSize_Bytes, 0, &data);
+    // Fetch the input data
+    uint8_t* bufferData = nullptr;
+    uint32_t bufferDataLengthBytes;
+    m_VulkanGetComputeBuffersCallback(bufferData, bufferDataLengthBytes);
 
-    // Copy the updated vertex data to the mapped memory
-    static float localBuf[] = {1.0f, 2.0f};
-    localBuf[0] += 1;
-    localBuf[1] += 1;
-    VkDeviceSize bufferSize = sizeof(localBuf) * sizeof(localBuf[0]);
-    memcpy(data, localBuf, static_cast<size_t>(bufferSize));
-
-    // Unmap the vertex buffer memory
-    vkUnmapMemory(device, computeInBufferMemory);
+    // Copy the compute shader input to GPU
+    VkDeviceSize bufferSize = bufferDataLengthBytes;
+    memcpy(computeInBufferMemoryMapped, bufferData, static_cast<size_t>(bufferSize));
 }
 
 void VulkanInit::runComputeShader()
@@ -245,7 +258,7 @@ void VulkanInit::runComputeShader()
     vkCmdBindDescriptorSets(CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 0, 1, &computeDescriptorSet, 0, nullptr);
     // Set the buffer size as a uniform
     ComputeShaderPushConstants pushConstants{};
-    pushConstants.InBufferSize_items = MaxComputeBufSize_Bytes / sizeof(float);
+    pushConstants.InBufferSize_items = 0;
     vkCmdPushConstants(CommandBuffer, computePipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(ComputeShaderPushConstants), &pushConstants);
     // TODO: This needs to be dynamic according to GPU resources and problem type
     vkCmdDispatch(CommandBuffer, 2, 1, 1); // Number of workgroups to execute the compute shader
@@ -277,18 +290,19 @@ void VulkanInit::runComputeShader()
 
     vkWaitForFences(device, 1, &Fence, true, uint64_t(-1));
 
-
+    // TODO: Any callback to the GPU Physics required after the calculation is finished?
     // Map output buffer and read results
-    void* data;
-    vkMapMemory(device, computeOutBufferMemory, 0, MaxComputeBufSize_Bytes, 0, &data);
+    // Fetch the input data
+    uint8_t* bufferData = nullptr;
+    uint32_t bufferDataLengthBytes;
+    m_VulkanGetComputeBuffersCallback(bufferData, bufferDataLengthBytes);
+    PhysicsGPU::Engine::GPUPhysicsEngine::WorldState* worldState = (PhysicsGPU::Engine::GPUPhysicsEngine::WorldState*)bufferData;
 
     // Copy data from GPU to CPU
-    uint32_t localBuf[MaxComputeBufSize_Bytes / sizeof(uint32_t)];
-    VkDeviceSize bufferSize = MaxComputeBufSize_Bytes;
-    memcpy(localBuf, data, MaxComputeBufSize_Bytes);
+    memcpy(bufferData, computeInBufferMemoryMapped, bufferDataLengthBytes);
 
     // Unmap the vertex buffer memory
-    vkUnmapMemory(device, computeOutBufferMemory);
+    //vkUnmapMemory(device, computeInBufferMemory);
 }
 
 uint32_t VulkanInit::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
@@ -305,6 +319,7 @@ uint32_t VulkanInit::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags p
 }
 
 void VulkanInit::mainLoop() {
+    bool first = true;
     unsigned frameCounter = 0;
     auto startTime = std::chrono::high_resolution_clock::now();
     auto endTime = std::chrono::high_resolution_clock::now();
@@ -723,8 +738,11 @@ void VulkanInit::createComputePipeline()
 
     vkAllocateDescriptorSets(device, &DescriptorSetAllocInfo, &computeDescriptorSet);
 
-    VkDescriptorBufferInfo InBufferInfo(computeInBuffer, 0, MaxComputeBufSize_Bytes);
-    VkDescriptorBufferInfo OutBufferInfo(computeOutBuffer, 0, MaxComputeBufSize_Bytes);
+    uint8_t* bufferData = nullptr;
+    uint32_t bufferDataLengthBytes;
+    m_VulkanGetComputeBuffersCallback(bufferData, bufferDataLengthBytes);
+    VkDescriptorBufferInfo InBufferInfo(computeInBuffer, 0, bufferDataLengthBytes);
+    VkDescriptorBufferInfo OutBufferInfo(computeOutBuffer, 0, bufferDataLengthBytes);
 
     VkWriteDescriptorSet WriteDescriptorSet1{};
     WriteDescriptorSet1.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

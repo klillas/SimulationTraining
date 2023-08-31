@@ -92,11 +92,20 @@ public:
     /// </summary>
     typedef void(*VulkanGetVerticesCallback)(std::vector<VulkanInit::Vertex>*);
 
+    /// <summary>
+    /// Fetches the pointer to the compute shader input buffer data
+    /// uint8_t* Pointer to data buffer
+    /// uint32_t& Length in bytes of the data buffer
+    /// </summary>
+    typedef void(*VulkanGetComputeBuffersCallback)(uint8_t*&, uint32_t&);
+
     void RegisterVulkanFrameRenderedCallback(VulkanFrameRenderedCallback callback);
 
     void RegisterVulkanFrameRenderStartCallback(VulkanFrameRenderStartCallback callback);
 
     void RegisterVulkanGetVerticesCallback(VulkanGetVerticesCallback callback);
+
+    void RegisterVulkanGetComputeBuffersCallback(VulkanGetComputeBuffersCallback callback);
 
     void run();
 
@@ -230,6 +239,7 @@ private:
 
     VkBuffer computeInBuffer;
     VkDeviceMemory computeInBufferMemory;
+    void* computeInBufferMemoryMapped;
 
     VkBuffer computeOutBuffer;
     VkDeviceMemory computeOutBufferMemory;
@@ -237,5 +247,6 @@ private:
     VulkanFrameRenderedCallback m_VulkanFrameRenderedCallback;
     VulkanGetVerticesCallback m_VulkanGetVerticesCallback;
     VulkanFrameRenderStartCallback m_VulkanFrameRenderStartCallback;
+    VulkanGetComputeBuffersCallback m_VulkanGetComputeBuffersCallback;
 };
 

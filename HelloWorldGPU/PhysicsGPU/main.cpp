@@ -24,12 +24,14 @@
 #include "./Physics/Engine/IPhysicsEngine.h"
 #include "./Physics/Engine/PhysicsEngine.h"
 #include "./Physics/PhysicsConfiguration.h"
+#include "GPUPhysics/Engine/GPUPhysicsEngine.h"
 #include <random>
 #include <glm/glm.hpp>
 
 using namespace Physics::RigidObjects;
 
 Physics::Engine::IPhysicsEngine* engine = new Physics::Engine::PhysicsEngine();
+PhysicsGPU::Engine::GPUPhysicsEngine* physicsGPUEngine = new PhysicsGPU::Engine::GPUPhysicsEngine();
 
 std::random_device rd;
 std::mt19937 gen(rd());
@@ -63,15 +65,20 @@ void VulkanFrameRenderedCallback(unsigned frametime_ms)
 #if RUN_TEST_ID == 1
         if (framesPerSecond > 55)
         {
-            unsigned newMoleculeSize = engine->GasMoleculeCount() * 0.05f + 1;
+            unsigned newMoleculeSize = physicsGPUEngine->GasMoleculeCount() * 0.05f + 1;
+            // Must be evenly divisible with 64
+            newMoleculeSize = newMoleculeSize + 64 - (newMoleculeSize % 64);
             for (unsigned i = 0; i < newMoleculeSize; i++)
             {
-                GasMolecules::GasMolecule* gasMolecule = new GasMolecules::GasMolecule();
-                gasMolecule->position = glm::vec2(distributionPosition(gen), distributionPosition(gen));
-                gasMolecule->color = glm::vec3(distributionColor(gen), distributionColor(gen), distributionColor(gen));
-                gasMolecule->velocity = glm::vec2(distributionVelocity(gen), distributionVelocity(gen));
-
-                engine->AddGasMolecule(gasMolecule);
+                physicsGPUEngine->AddMolecule(
+                    distributionPosition(gen), 
+                    distributionPosition(gen), 
+                    distributionVelocity(gen), 
+                    distributionVelocity(gen),
+                    distributionColor(gen),
+                    distributionColor(gen),
+                    distributionColor(gen)
+                );
             }
         }
 #endif
@@ -79,7 +86,7 @@ void VulkanFrameRenderedCallback(unsigned frametime_ms)
         std::string str2 = "Molecules: ";
         // Convert float to string
         std::stringstream ss2;
-        ss2 << std::fixed << std::setprecision(1) << engine->GasMoleculeCount();
+        ss2 << std::fixed << std::setprecision(1) << physicsGPUEngine->GasMoleculeCount();
         std::string floatString2 = ss2.str();
         // Concatenate the string and float string
         std::string result2 = str2 + floatString2;
@@ -92,13 +99,18 @@ void VulkanFrameRenderedCallback(unsigned frametime_ms)
 
 void VulkanFrameRenderStartCallback()
 {
-    engine->PhysicsTick(0.005f, 1);
+    physicsGPUEngine->PhysicsTick(0.005f, 1);
 }
 
 void VulkanGetVerticesCallback(std::vector<VulkanInit::Vertex>* verticesBuffer)
 {
     verticesBuffer->clear();
-    engine->GetVertices(verticesBuffer);
+    physicsGPUEngine->GetVertices(verticesBuffer);
+}
+
+void VulkanGetComputeBuffersCallback(uint8_t*& buffer, uint32_t& bufferSizeBytes)
+{
+    physicsGPUEngine->VulkanGetComputeBuffersCallback(buffer, bufferSizeBytes);
 }
 
 
@@ -107,45 +119,38 @@ int main() {
     app.RegisterVulkanFrameRenderedCallback(VulkanFrameRenderedCallback);
     app.RegisterVulkanFrameRenderStartCallback(VulkanFrameRenderStartCallback);
     app.RegisterVulkanGetVerticesCallback(VulkanGetVerticesCallback);
+    app.RegisterVulkanGetComputeBuffersCallback(VulkanGetComputeBuffersCallback);
 
 #if RUN_TEST_ID == 2
-    GasMolecules::GasMolecule* gasMolecule = new GasMolecules::GasMolecule();
-    gasMolecule->position = glm::vec2(0.0f, 0.0f);
-    gasMolecule->color = glm::vec3(1.0f, 0.0f, 0.0f);
-    gasMolecule->velocity = glm::vec2(0.2f, 0.0f);
-    engine->AddGasMolecule(gasMolecule);
-
-    gasMolecule = new GasMolecules::GasMolecule();
-    gasMolecule->position = glm::vec2(PhysicsConfiguration::GasMoleculeDiameter * 1.3f, PhysicsConfiguration::GasMoleculeDiameter * 2.0f);
-    gasMolecule->color = glm::vec3(0.0f, 1.0f, 0.0f);
-    gasMolecule->velocity = glm::vec2(-0.0f, -1.0f);
-    engine->AddGasMolecule(gasMolecule);
+    physicsGPUEngine->AddMolecule(
+        PhysicsConfiguration::GasMoleculeDiameter * 1.3f, 
+        PhysicsConfiguration::GasMoleculeDiameter * 2.0f, 
+        0.0f, 
+        -1.0f,
+        distributionColor(gen),
+        distributionColor(gen),
+        distributionColor(gen)
+    );
 #endif
 
 #if RUN_TEST_ID == 1
     for (unsigned i = 0; i < Physics::PhysicsConfiguration::GasMoleculeStartCount; i++)
     {
-        GasMolecules::GasMolecule* gasMolecule = new GasMolecules::GasMolecule();
-        gasMolecule->position = glm::vec2(distributionPosition(gen), distributionPosition(gen));
-        gasMolecule->color = glm::vec3(distributionColor(gen), distributionColor(gen), distributionColor(gen));
-        gasMolecule->velocity = glm::vec2(distributionVelocity(gen), distributionVelocity(gen));
-
-        engine->AddGasMolecule(gasMolecule);
+        physicsGPUEngine->AddMolecule(
+            distributionPosition(gen), 
+            distributionPosition(gen), 
+            distributionVelocity(gen), 
+            distributionVelocity(gen),
+            distributionColor(gen),
+            distributionColor(gen),
+            distributionColor(gen)
+        );
     }
 #endif
 
 #if RUN_TEST_ID == 0
-    GasMolecules::GasMolecule* gasMolecule = new GasMolecules::GasMolecule();
-    gasMolecule->position = glm::vec2(-0.5f, 0.0f);
-    gasMolecule->color = glm::vec3(distributionColor(gen), distributionColor(gen), distributionColor(gen));
-    gasMolecule->velocity = glm::vec2(1.0f, 0.0f);
-    engine->AddGasMolecule(gasMolecule);
-
-    gasMolecule = new GasMolecules::GasMolecule();
-    gasMolecule->position = glm::vec2(-0.0f, 0.0f);
-    gasMolecule->color = glm::vec3(distributionColor(gen), distributionColor(gen), distributionColor(gen));
-    gasMolecule->velocity = glm::vec2(-0.2f, 0.0f);
-    engine->AddGasMolecule(gasMolecule);
+    physicsGPUEngine->AddMolecule(-0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f);
+    physicsGPUEngine->AddMolecule(0.0f, 0.0f, -0.2f, 0.0f, 0.0f, 1.0f, 0.0f);
 #endif
 
     try {
