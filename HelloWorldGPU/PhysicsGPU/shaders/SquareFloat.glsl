@@ -2,7 +2,7 @@
 
 #define INVOCATION_SIZE_X 32
 // TODO: Connect gas molecule max with PhysicsConfiguration::PhysicsConfiguration_GasMoleculeMax
-#define PhysicsConfiguration_GasMoleculeMax 8192
+#define PhysicsConfiguration_GasMoleculeMax 524288
 
 layout(local_size_x = INVOCATION_SIZE_X, local_size_y = 1) in;
 
@@ -60,7 +60,6 @@ void main() {
 		worldStateIn.debugOut5 = INVOCATION_SIZE_X;
 	}
 	*/
-	
 
 	for (uint i = (globalInvocationID * itemsPerThread); i < ((globalInvocationID * itemsPerThread) + itemsPerThread); i++)
 	{

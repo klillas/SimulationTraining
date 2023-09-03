@@ -113,6 +113,16 @@ void VulkanGetComputeBuffersCallback(uint8_t*& buffer, uint32_t& bufferSizeBytes
     physicsGPUEngine->VulkanGetComputeBuffersCallback(buffer, bufferSizeBytes);
 }
 
+void VulkanComputeBufferTickCallback(void* gpuBuffer)
+{
+    physicsGPUEngine->VulkanPostComputeBufferTickCallback(gpuBuffer);
+}
+
+void VulkanPreComputeBufferTickCallback(void* gpuBuffer)
+{
+    physicsGPUEngine->VulkanPreComputeBufferTickCallback(gpuBuffer);
+}
+
 
 int main() {
     VulkanInit app;
@@ -120,6 +130,8 @@ int main() {
     app.RegisterVulkanFrameRenderStartCallback(VulkanFrameRenderStartCallback);
     app.RegisterVulkanGetVerticesCallback(VulkanGetVerticesCallback);
     app.RegisterVulkanGetComputeBuffersCallback(VulkanGetComputeBuffersCallback);
+    app.RegisterVulkanPostComputeBufferTickCallback(VulkanComputeBufferTickCallback);
+    app.RegisterVulkanPreComputeBufferTickCallback(VulkanPreComputeBufferTickCallback);
 
 #if RUN_TEST_ID == 2
     physicsGPUEngine->AddMolecule(

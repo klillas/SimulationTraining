@@ -94,10 +94,22 @@ public:
 
     /// <summary>
     /// Fetches the pointer to the compute shader input buffer data
-    /// uint8_t* Pointer to data buffer
+    /// uint8_t*& Pointer to data buffer
     /// uint32_t& Length in bytes of the data buffer
     /// </summary>
     typedef void(*VulkanGetComputeBuffersCallback)(uint8_t*&, uint32_t&);
+
+    /// <summary>
+    /// Callback when the compute buffer has been run once, like a physics tick
+    /// void* pointer to the start of the compute memory structure in the GPU
+    /// </summary>
+    typedef void(*VulkanPostComputeBufferTickCallback)(void*);
+
+    /// <summary>
+    /// Callback just before the compute buffer runs
+    /// void* pointer to the start of the compute memory structure in the GPU
+    /// </summary>
+    typedef void(*VulkanPreComputeBufferTickCallback)(void*);
 
     void RegisterVulkanFrameRenderedCallback(VulkanFrameRenderedCallback callback);
 
@@ -106,6 +118,10 @@ public:
     void RegisterVulkanGetVerticesCallback(VulkanGetVerticesCallback callback);
 
     void RegisterVulkanGetComputeBuffersCallback(VulkanGetComputeBuffersCallback callback);
+
+    void RegisterVulkanPostComputeBufferTickCallback(VulkanPostComputeBufferTickCallback callback);
+
+    void RegisterVulkanPreComputeBufferTickCallback(VulkanPreComputeBufferTickCallback callback);
 
     void run();
 
@@ -248,5 +264,7 @@ private:
     VulkanGetVerticesCallback m_VulkanGetVerticesCallback;
     VulkanFrameRenderStartCallback m_VulkanFrameRenderStartCallback;
     VulkanGetComputeBuffersCallback m_VulkanGetComputeBuffersCallback;
+    VulkanPostComputeBufferTickCallback m_VulkanComputeBufferTickCallback;
+    VulkanPreComputeBufferTickCallback m_VulkanPreComputeBufferTickCallback;
 };
 

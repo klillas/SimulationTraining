@@ -43,6 +43,16 @@ void GPUPhysicsEngine::VulkanGetComputeBuffersCallback(uint8_t*& buffer, uint32_
 	bufferSizeBytes = sizeof(m_worldState);
 }
 
+void GPUPhysicsEngine::VulkanPostComputeBufferTickCallback(void* gpuBuffer)
+{
+    memcpy((void*) &m_worldState, gpuBuffer, sizeof(m_worldState));
+}
+
+void GPUPhysicsEngine::VulkanPreComputeBufferTickCallback(void* gpuBuffer)
+{
+    memcpy(gpuBuffer, (void*)&m_worldState, sizeof(m_worldState));
+}
+
 unsigned GPUPhysicsEngine::GasMoleculeCount()
 {
 	return m_worldState.physicsState.MoleculeCount;

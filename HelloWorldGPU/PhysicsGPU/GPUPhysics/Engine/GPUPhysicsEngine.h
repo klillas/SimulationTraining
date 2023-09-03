@@ -53,6 +53,10 @@ namespace PhysicsGPU::Engine
 
         void VulkanGetComputeBuffersCallback(uint8_t*& buffer, uint32_t& bufferSizeBytes);
 
+        void VulkanPostComputeBufferTickCallback(void* gpuBuffer);
+
+        void VulkanPreComputeBufferTickCallback(void* gpuBuffer);
+
         void AddMolecule(float positionX, float positionY, float velocityX, float velocityY, float colorR, float colorG, float colorB);
 
         unsigned GasMoleculeCount();

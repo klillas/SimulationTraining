@@ -67,6 +67,22 @@ void VulkanInit::RegisterVulkanGetComputeBuffersCallback(VulkanGetComputeBuffers
     m_VulkanGetComputeBuffersCallback = callback;
 }
 
+void VulkanInit::RegisterVulkanPostComputeBufferTickCallback(VulkanPostComputeBufferTickCallback callback)
+{
+    assert(callback);
+    assert(!m_VulkanComputeBufferTickCallback);
+
+    m_VulkanComputeBufferTickCallback = callback;
+}
+
+void VulkanInit::RegisterVulkanPreComputeBufferTickCallback(VulkanPreComputeBufferTickCallback callback)
+{
+    assert(callback);
+    assert(!m_VulkanPreComputeBufferTickCallback);
+
+    m_VulkanPreComputeBufferTickCallback = callback;
+}
+
 void VulkanInit::run() {
     initWindow();
     initVulkan();
@@ -264,6 +280,9 @@ void VulkanInit::runComputeShader()
     vkCmdDispatch(CommandBuffer, 2, 1, 1); // Number of workgroups to execute the compute shader
     vkEndCommandBuffer(CommandBuffer);
 
+    // Callback for compute shader owner to update the GPU memory before running the shader
+    m_VulkanPreComputeBufferTickCallback(computeInBufferMemoryMapped);
+
     // Fence and submit
     VkFence Fence;
     VkFenceCreateInfo FenceInfo{};
@@ -290,16 +309,8 @@ void VulkanInit::runComputeShader()
 
     vkWaitForFences(device, 1, &Fence, true, uint64_t(-1));
 
-    // TODO: Any callback to the GPU Physics required after the calculation is finished?
-    // Map output buffer and read results
-    // Fetch the input data
-    uint8_t* bufferData = nullptr;
-    uint32_t bufferDataLengthBytes;
-    m_VulkanGetComputeBuffersCallback(bufferData, bufferDataLengthBytes);
-    PhysicsGPU::Engine::GPUPhysicsEngine::WorldState* worldState = (PhysicsGPU::Engine::GPUPhysicsEngine::WorldState*)bufferData;
-
-    // Copy data from GPU to CPU
-    memcpy(bufferData, computeInBufferMemoryMapped, bufferDataLengthBytes);
+    // Inform the callback target that we ran the compute shader
+    m_VulkanComputeBufferTickCallback(computeInBufferMemoryMapped);
 
     // Unmap the vertex buffer memory
     //vkUnmapMemory(device, computeInBufferMemory);
