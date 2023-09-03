@@ -45,12 +45,23 @@ void GPUPhysicsEngine::VulkanGetComputeBuffersCallback(uint8_t*& buffer, uint32_
 
 void GPUPhysicsEngine::VulkanPostComputeBufferTickCallback(void* gpuBuffer)
 {
-    memcpy((void*) &m_worldState, gpuBuffer, sizeof(m_worldState));
+    // TODO: Only copy the necessary changes back from GPU to CPU
+    unsigned maxMolecules = m_worldState.physicsState.MoleculeCount / PhysicsConfiguration::PhysicsEngineFilterMoleculeFactor;
+    uintptr_t offset = reinterpret_cast<uintptr_t>(&m_worldState.physicsState.Molecules) - reinterpret_cast<uintptr_t>(&m_worldState);
+    unsigned bytesToTransfer = maxMolecules * sizeof(WorldState::PhysicsState::Molecule);
+
+    // Calculate the source and destination pointers using pointer arithmetic
+    void* src = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(gpuBuffer) + offset);
+    void* dest = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(&m_worldState) + offset);
+
+    // Use memcpy to copy the data
+    memcpy(dest, src, bytesToTransfer);
 }
 
 void GPUPhysicsEngine::VulkanPreComputeBufferTickCallback(void* gpuBuffer)
 {
-    memcpy(gpuBuffer, (void*)&m_worldState, sizeof(m_worldState));
+    // TODO: Send over only the new state changes that happened on the CPU side
+    //memcpy(gpuBuffer, (void*)&m_worldState, sizeof(m_worldState));
 }
 
 unsigned GPUPhysicsEngine::GasMoleculeCount()

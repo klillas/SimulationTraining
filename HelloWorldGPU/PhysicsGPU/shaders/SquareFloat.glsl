@@ -40,6 +40,9 @@ struct WorldState {
 layout(std430, binding = 0) buffer lay0 { WorldState worldStateIn; };
 layout(std430, binding = 1) buffer lay1 { WorldState worldStateOut; };
 
+void UpdateMoleculePosition(uint moleculeIndex);
+void ResolveMoleculeWallInteraction(uint moleculeIndex);
+
 void main() {
 	const uint globalInvocationID = gl_GlobalInvocationID.x;
 	const uint totalGlobalInvocations = gl_NumWorkGroups.x * INVOCATION_SIZE_X;
@@ -66,33 +69,46 @@ void main() {
 		// TODO: Remove multiply of physicsticktimedelta if we know the delta velocity
 
 		// Update position according to velocity of molecule
-		worldStateIn.PhysicsState.Molecules[i].PositionX += (worldStateIn.PhysicsState.Molecules[i].VelocityX * worldStateIn.PhysicsState.PhysicsTickTimeDelta);
-		worldStateIn.PhysicsState.Molecules[i].PositionY += (worldStateIn.PhysicsState.Molecules[i].VelocityY * worldStateIn.PhysicsState.PhysicsTickTimeDelta);
+		UpdateMoleculePosition(i);
+
+		// Molecule collision resolution
 		
 		// Check wall boundaries and bounce if intersect
-		if (worldStateIn.PhysicsState.Molecules[i].PositionX > 1)
-		{
-			worldStateIn.PhysicsState.Molecules[i].PositionX = (1.0f - worldStateIn.PhysicsState.MoleculeRadius);
-			worldStateIn.PhysicsState.Molecules[i].VelocityX = -worldStateIn.PhysicsState.Molecules[i].VelocityX;
-		}
-		else if (worldStateIn.PhysicsState.Molecules[i].PositionX < -1)
-		{
-			worldStateIn.PhysicsState.Molecules[i].PositionX = (-1.0f + worldStateIn.PhysicsState.MoleculeRadius);
-			worldStateIn.PhysicsState.Molecules[i].VelocityX = -worldStateIn.PhysicsState.Molecules[i].VelocityX;
-		}
-
-		if (worldStateIn.PhysicsState.Molecules[i].PositionY > 1)
-		{
-			worldStateIn.PhysicsState.Molecules[i].PositionY = (1.0f - worldStateIn.PhysicsState.MoleculeRadius);
-			worldStateIn.PhysicsState.Molecules[i].VelocityY = -worldStateIn.PhysicsState.Molecules[i].VelocityY;
-		}
-		else if (worldStateIn.PhysicsState.Molecules[i].PositionY < -1)
-		{
-			worldStateIn.PhysicsState.Molecules[i].PositionY = (-1.0f + worldStateIn.PhysicsState.MoleculeRadius);
-			worldStateIn.PhysicsState.Molecules[i].VelocityY = -worldStateIn.PhysicsState.Molecules[i].VelocityY;
-		}
+		ResolveMoleculeWallInteraction(i);
 	}
 
 	//worldStateIn.PhysicsState.Molecules[0].PositionX += worldStateIn.PhysicsState.Molecules[0].VelocityX;
+}
+
+
+void UpdateMoleculePosition(uint moleculeIndex)
+{
+	worldStateIn.PhysicsState.Molecules[moleculeIndex].PositionX += (worldStateIn.PhysicsState.Molecules[moleculeIndex].VelocityX * worldStateIn.PhysicsState.PhysicsTickTimeDelta);
+	worldStateIn.PhysicsState.Molecules[moleculeIndex].PositionY += (worldStateIn.PhysicsState.Molecules[moleculeIndex].VelocityY * worldStateIn.PhysicsState.PhysicsTickTimeDelta);
+}
+
+void ResolveMoleculeWallInteraction(uint moleculeIndex)
+{
+		if (worldStateIn.PhysicsState.Molecules[moleculeIndex].PositionX > 1)
+		{
+			worldStateIn.PhysicsState.Molecules[moleculeIndex].PositionX = (1.0f - worldStateIn.PhysicsState.MoleculeRadius);
+			worldStateIn.PhysicsState.Molecules[moleculeIndex].VelocityX = -worldStateIn.PhysicsState.Molecules[moleculeIndex].VelocityX;
+		}
+		else if (worldStateIn.PhysicsState.Molecules[moleculeIndex].PositionX < -1)
+		{
+			worldStateIn.PhysicsState.Molecules[moleculeIndex].PositionX = (-1.0f + worldStateIn.PhysicsState.MoleculeRadius);
+			worldStateIn.PhysicsState.Molecules[moleculeIndex].VelocityX = -worldStateIn.PhysicsState.Molecules[moleculeIndex].VelocityX;
+		}
+
+		if (worldStateIn.PhysicsState.Molecules[moleculeIndex].PositionY > 1)
+		{
+			worldStateIn.PhysicsState.Molecules[moleculeIndex].PositionY = (1.0f - worldStateIn.PhysicsState.MoleculeRadius);
+			worldStateIn.PhysicsState.Molecules[moleculeIndex].VelocityY = -worldStateIn.PhysicsState.Molecules[moleculeIndex].VelocityY;
+		}
+		else if (worldStateIn.PhysicsState.Molecules[moleculeIndex].PositionY < -1)
+		{
+			worldStateIn.PhysicsState.Molecules[moleculeIndex].PositionY = (-1.0f + worldStateIn.PhysicsState.MoleculeRadius);
+			worldStateIn.PhysicsState.Molecules[moleculeIndex].VelocityY = -worldStateIn.PhysicsState.Molecules[moleculeIndex].VelocityY;
+		}	
 }
 
