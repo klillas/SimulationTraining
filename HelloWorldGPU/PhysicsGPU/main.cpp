@@ -27,6 +27,7 @@
 #include "GPUPhysics/Engine/GPUPhysicsEngine.h"
 #include <random>
 #include <glm/glm.hpp>
+#include <GPUPhysics/GPUPhysicsConfiguration.h>
 
 using namespace Physics::RigidObjects;
 
@@ -66,8 +67,8 @@ void VulkanFrameRenderedCallback(unsigned frametime_ms)
         if (framesPerSecond > 55)
         {
             unsigned newMoleculeSize = physicsGPUEngine->GasMoleculeCount() * 0.05f + 1;
-            // Must be evenly divisible with 64
-            newMoleculeSize = newMoleculeSize + 64 - (newMoleculeSize % 64);
+            // Must be evenly divisible with GPUPhysics::GPUPhysicsConfiguration::GPU_COMPUTE_SHADER_COMPUTE_SHADER_GROUP_COUNT
+            newMoleculeSize = newMoleculeSize + GPUPhysics::GPUPhysicsConfiguration::GPU_COMPUTE_SHADER_COMPUTE_SHADER_GROUP_COUNT - (newMoleculeSize % GPUPhysics::GPUPhysicsConfiguration::GPU_COMPUTE_SHADER_COMPUTE_SHADER_GROUP_COUNT);
             for (unsigned i = 0; i < newMoleculeSize; i++)
             {
                 physicsGPUEngine->AddMolecule(

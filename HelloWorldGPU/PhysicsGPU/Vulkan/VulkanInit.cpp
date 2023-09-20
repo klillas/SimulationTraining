@@ -6,6 +6,7 @@
 #include <chrono>
 #include "./Physics/PhysicsConfiguration.h"
 #include "GPUPhysics/Engine/GPUPhysicsEngine.h"
+#include "GPUPhysics/GPUPhysicsConfiguration.h"
 
 using namespace Physics;
 
@@ -123,6 +124,7 @@ void VulkanInit::initVulkan() {
 
     createComputeBuffer();
     createComputePipeline();
+    updateComputeBuffer();
 }
 
 void VulkanInit::createVertexBuffer() {
@@ -277,7 +279,7 @@ void VulkanInit::runComputeShader()
     pushConstants.InBufferSize_items = 0;
     vkCmdPushConstants(CommandBuffer, computePipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(ComputeShaderPushConstants), &pushConstants);
     // TODO: This needs to be dynamic according to GPU resources and problem type
-    vkCmdDispatch(CommandBuffer, 2, 1, 1); // Number of workgroups to execute the compute shader
+    vkCmdDispatch(CommandBuffer, GPUPhysics::GPUPhysicsConfiguration::GPU_COMPUTE_SHADER_COMPUTE_SHADER_GROUP_COUNT, 1, 1); // Number of workgroups to execute the compute shader
     vkEndCommandBuffer(CommandBuffer);
 
     // Callback for compute shader owner to update the GPU memory before running the shader
@@ -344,7 +346,6 @@ void VulkanInit::mainLoop() {
 
         glfwPollEvents();
 
-        updateComputeBuffer();
         runComputeShader();
 
         updateVertexBuffer();

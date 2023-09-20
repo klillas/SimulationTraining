@@ -45,17 +45,28 @@ void GPUPhysicsEngine::VulkanGetComputeBuffersCallback(uint8_t*& buffer, uint32_
 
 void GPUPhysicsEngine::VulkanPostComputeBufferTickCallback(void* gpuBuffer)
 {
-    // TODO: Only copy the necessary changes back from GPU to CPU
+    // Only copy the molecules we want to render back to CPU
     unsigned maxMolecules = m_worldState.physicsState.MoleculeCount / PhysicsConfiguration::PhysicsEngineFilterMoleculeFactor;
     uintptr_t offset = reinterpret_cast<uintptr_t>(&m_worldState.physicsState.Molecules) - reinterpret_cast<uintptr_t>(&m_worldState);
     unsigned bytesToTransfer = maxMolecules * sizeof(WorldState::PhysicsState::Molecule);
+    memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(&m_worldState) + offset),
+        reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(gpuBuffer) + offset),
+        bytesToTransfer);
 
-    // Calculate the source and destination pointers using pointer arithmetic
-    void* src = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(gpuBuffer) + offset);
-    void* dest = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(&m_worldState) + offset);
+    // Debug purposes, copy cell - molecule mapping back to CPU
+    offset = reinterpret_cast<uintptr_t>(&m_worldState.physicsState.particleGrid) - reinterpret_cast<uintptr_t>(&m_worldState);
+    bytesToTransfer = sizeof(WorldState::PhysicsState::ParticleGrid);
+    memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(&m_worldState) + offset),
+        reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(gpuBuffer) + offset),
+        bytesToTransfer);
 
-    // Use memcpy to copy the data
-    memcpy(dest, src, bytesToTransfer);
+    // TODO: Not safe to assume the debug outputs are next to each other. Create an array of debug outputs instead
+    // Copy debug output
+    offset = reinterpret_cast<uintptr_t>(&m_worldState.debugOut1) - reinterpret_cast<uintptr_t>(&m_worldState);
+    bytesToTransfer = 5 * sizeof(WorldState::debugOut1);
+    memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(&m_worldState) + offset),
+        reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(gpuBuffer) + offset),
+        bytesToTransfer);
 }
 
 void GPUPhysicsEngine::VulkanPreComputeBufferTickCallback(void* gpuBuffer)
